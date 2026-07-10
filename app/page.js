@@ -1,5 +1,9 @@
-import { redirect } from 'next/navigation';
+import ComplaintLanding from '@/components/ComplaintLanding';
+
+export const metadata = {
+  title: 'Report a Concern · Concern Intelligence Platform',
+};
 
 export default function RootPage() {
-  redirect('/dashboard');
+  return <ComplaintLanding />;
 }
