@@ -1,10 +1,13 @@
 'use client';
 
 import { useActionState } from 'react';
+import Link from 'next/link';
 import { loginAction } from '@/lib/actions';
+import { useStore } from '@/lib/store';
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, null);
+  const resetDemoData = useStore((s) => s.resetDemoData);
 
   return (
     <div className="login-wrap">
@@ -28,6 +31,20 @@ export default function LoginForm() {
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <div className="login-hint">
+          <Link href="/complaint" className="tx-link">Are you a customer? Report a concern instead →</Link>
+          <br />
+          <span
+            className="tx-link"
+            onClick={() => {
+              resetDemoData();
+              window.location.reload();
+            }}
+          >
+            Reset demo data
+          </span>
+        </div>
       </div>
     </div>
   );

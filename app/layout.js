@@ -1,4 +1,5 @@
 import './globals.css';
+import StoreSync from '@/components/StoreSync';
 
 export const metadata = {
   title: 'Concern Intelligence Platform · Sri Lanka',
@@ -15,7 +16,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <StoreSync />
+        {children}
+      </body>
     </html>
   );
 }

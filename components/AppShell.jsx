@@ -90,6 +90,9 @@ export default function AppShell({ session, children }) {
             <div className="tb-sub">{sub}</div>
           </div>
           <div className="tb-right">
+            <a href="/complaint" target="_blank" rel="noopener noreferrer" className="btn btn-gh btn-sm" style={{ marginRight: 4 }}>
+              Open Customer Form ↗
+            </a>
             <div className="tb-ico has-dot" onClick={(e) => { e.stopPropagation(); setNotifOpen((v) => !v); setUserOpen(false); }}>
               <NavIcon type="bell" />
             </div>
