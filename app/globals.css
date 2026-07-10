@@ -328,7 +328,7 @@ label.attach-btn{display:inline-flex}
 .user-menu-item.danger:hover{color:var(--red);background:var(--red-d)}
 
 /* ── public customer landing page ── */
-.pub{min-height:100vh;background:var(--bg0);overflow-y:auto}
+.pub{height:100vh;background:var(--bg0);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .pub-nav{height:64px;display:flex;align-items:center;padding:0 28px;border-bottom:1px solid var(--bd);background:var(--bg1);position:sticky;top:0;z-index:20}
 .pub-nav-brand{display:flex;align-items:center;gap:10px}
 .pub-nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
