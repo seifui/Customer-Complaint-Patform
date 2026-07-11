@@ -138,19 +138,19 @@ tbody tr:hover{background:var(--bg2)}
 .tx-link{color:var(--acc);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .tx-link:hover{opacity:.75}
 
-.fb{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.fi{background:var(--bg1);border:1px solid var(--bd2);color:var(--tx0);padding:0 10px;border-radius:var(--rpill);font-size:12px;font-family:var(--fb);outline:none;height:32px}
+.fb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.fi{background:var(--bg1);border:1px solid var(--bd2);color:var(--tx0);padding:0 13px;border-radius:var(--rpill);font-size:12px;font-family:var(--fb);outline:none;height:32px}
 .fi:focus{border-color:var(--tx0)}
-select.fi{cursor:pointer}
+select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 3.2l4 4 4-4' stroke='%238b8678' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;background-size:10px 10px}
 .fi::placeholder{color:var(--tx3)}
 
-.form-row{margin-bottom:12px}
-.form-lbl{font-size:11px;color:var(--tx2);margin-bottom:5px;font-family:var(--fc);display:block;font-weight:500}
+.form-row{margin-bottom:14px}
+.form-lbl{font-size:11px;color:var(--tx2);margin-bottom:6px;font-family:var(--fc);display:block;font-weight:500}
 .form-lbl .req{color:var(--red);margin-left:2px}
-.form-inp{width:100%;background:var(--bg1);border:1px solid var(--bd2);color:var(--tx0);padding:8px 11px;border-radius:var(--r3);font-size:12.5px;font-family:var(--fb);outline:none;transition:border-color .12s}
+.form-inp{width:100%;background:var(--bg1);border:1px solid var(--bd2);color:var(--tx0);padding:9px 13px;border-radius:var(--r3);font-size:12.5px;font-family:var(--fb);outline:none;transition:border-color .12s}
 .form-inp:focus{border-color:var(--tx0)}
 textarea.form-inp{resize:vertical;min-height:78px;line-height:1.6}
-select.form-inp{cursor:pointer}
+select.form-inp{cursor:pointer;appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 3.2l4 4 4-4' stroke='%238b8678' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;background-size:10px 10px}
 
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .bar-lbl{width:150px;flex-shrink:0;font-size:11px;color:var(--tx1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -258,11 +258,11 @@ select.form-inp{cursor:pointer}
 .callout-orange{background:var(--orange-d);border:1px solid rgba(194,102,13,.2)}
 
 .sparkline{width:100%;height:70px}
-.flow-strip{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:12px 0}
-.flow-step{flex-shrink:0;min-width:96px;text-align:center;font-size:9.5px;color:var(--tx2);font-family:var(--fc)}
+.flow-strip{display:flex;align-items:flex-start;gap:4px;padding:12px 0}
+.flow-step{flex:1;min-width:0;text-align:center;font-size:9.5px;color:var(--tx2);font-family:var(--fc);padding:0 2px}
 .flow-step-dot{width:26px;height:26px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;margin:0 auto 5px;font-size:11px;color:var(--tx1)}
 .flow-step.done .flow-step-dot{background:var(--tx0);border-color:var(--tx0);color:#fff}
-.flow-arrow{color:var(--tx3);flex-shrink:0}
+.flow-arrow{color:var(--tx3);flex-shrink:0;margin-top:8px;font-size:11px}
 
 .processing-box{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r3);margin:14px 0}
 .spinner{width:16px;height:16px;border-radius:50%;border:2px solid var(--bg4);border-top-color:var(--tx0);animation:spin .8s linear infinite;flex-shrink:0}
@@ -279,6 +279,21 @@ hr.div{border:none;border-top:1px solid var(--bd);margin:16px 0}
 .exec-card-title{font-family:var(--fc);font-weight:700;font-size:15px;letter-spacing:-.005em}
 .exec-card-row{font-size:12px;color:var(--tx1);line-height:1.55;margin-bottom:6px}
 .exec-card-row b{color:var(--tx0)}
+
+/* ── dashboard attention summary card ── */
+.attn-card{display:flex;align-items:center;gap:16px;background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r4);padding:18px 20px;cursor:pointer;transition:all .12s;box-shadow:0 1px 2px rgba(20,16,8,.03)}
+.attn-card:hover{border-color:var(--bd2);box-shadow:0 2px 10px rgba(20,16,8,.06)}
+.attn-card-icon{width:42px;height:42px;border-radius:var(--rpill);background:var(--red-d);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.attn-card-body{flex:1;min-width:0}
+.attn-card-count{font-family:var(--fc);font-weight:700;font-size:19px;letter-spacing:-.01em}
+.attn-card-sub{font-size:11.5px;color:var(--tx2);margin-top:3px}
+.attn-card-breakdown{display:flex;gap:6px;flex-shrink:0}
+.attn-card-cta{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--tx1);flex-shrink:0}
+.attn-card-cta svg{transition:transform .15s;flex-shrink:0}
+.attn-card-cta.open svg{transform:rotate(180deg)}
+.attn-list{margin-top:12px}
+.dash-block{margin-bottom:24px}
+.dash-block:last-child{margin-bottom:0}
 
 /* ── intervention plan ── */
 .interv-block{padding:15px}
