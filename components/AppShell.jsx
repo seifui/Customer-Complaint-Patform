@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NAV_SECTIONS } from '@/lib/nav';
+import { NAV_ITEMS } from '@/lib/nav';
 import { routeMetaFor } from '@/lib/routeMeta';
 import { useStore } from '@/lib/store';
 import { logoutAction } from '@/lib/actions';
@@ -44,23 +44,14 @@ export default function AppShell({ session, children }) {
           </div>
         </div>
         <div className="sb-nav">
-          {NAV_SECTIONS.map((section) => {
-            const visibleItems = section.items.filter((it) => it.roles.includes(session.role));
-            if (!visibleItems.length) return null;
+          {NAV_ITEMS.filter((it) => it.roles.includes(session.role)).map((it) => {
+            const active = pathname === it.href || (it.href !== '/' && pathname.startsWith(it.href + '/'));
             return (
-              <div key={section.label}>
-                <div className="sb-sec">{section.label}</div>
-                {visibleItems.map((it) => {
-                  const active = pathname === it.href || (it.href !== '/' && pathname.startsWith(it.href + '/'));
-                  return (
-                    <Link key={it.href} href={it.href} className={'sb-i' + (active ? ' on' : '')}>
-                      <NavIcon type={it.iconType} />
-                      <span>{it.label}</span>
-                      {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
-                    </Link>
-                  );
-                })}
-              </div>
+              <Link key={it.href} href={it.href} className={'sb-i' + (active ? ' on' : '')}>
+                <NavIcon type={it.iconType} />
+                <span>{it.label}</span>
+                {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
+              </Link>
             );
           })}
         </div>
@@ -90,9 +81,6 @@ export default function AppShell({ session, children }) {
             <div className="tb-sub">{sub}</div>
           </div>
           <div className="tb-right">
-            <a href="/complaint" target="_blank" rel="noopener noreferrer" className="btn btn-gh btn-sm" style={{ marginRight: 4 }}>
-              Open Customer Form ↗
-            </a>
             <div className="tb-ico has-dot" onClick={(e) => { e.stopPropagation(); setNotifOpen((v) => !v); setUserOpen(false); }}>
               <NavIcon type="bell" />
             </div>
