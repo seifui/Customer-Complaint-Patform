@@ -27,7 +27,7 @@ export default function LoginForm() {
             <label className="form-lbl">Password</label>
             <input className="form-inp" type="password" name="password" required placeholder="Password" />
           </div>
-          <button className="btn btn-p" type="submit" disabled={pending} style={{ width: '100%', height: 36, justifyContent: 'center', marginTop: 4 }}>
+          <button className={'btn btn-p' + (pending ? ' btn-loading' : '')} type="submit" disabled={pending} style={{ width: '100%', height: 40, justifyContent: 'center', marginTop: 6 }}>
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
         </form>

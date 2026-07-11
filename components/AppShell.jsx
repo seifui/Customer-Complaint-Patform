@@ -100,7 +100,9 @@ export default function AppShell({ session, children }) {
           ))}
         </div>
 
-        <div className="content">{children}</div>
+        <div className="content">
+          <div className="page-fade" key={pathname}>{children}</div>
+        </div>
       </div>
 
       <Toast />

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import SlidePanel from './SlidePanel';
 import Callout from './Callout';
+import AiStepper from './AiStepper';
 import { ChBadge, SevBadge, SntBadge, TriageBadge } from './Badges';
 import { useStore } from '@/lib/store';
 import { triageInfo } from '@/lib/helpers';
@@ -77,36 +78,28 @@ function ConcernDetailBody({ c, tri, linkedProblem, goToProblem }) {
 
       <div className="pnl-section">
         <div className="pnl-section-hd">Processing Pipeline</div>
-        <div className="flow-strip" style={{ padding: '2px 0 12px' }}>
-          <div className="flow-step done">
-            <div className="flow-step-dot">✓</div>Ingest
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step done">
-            <div className="flow-step-dot">✓</div>Dedupe
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step done">
-            <div className="flow-step-dot">✓</div>Understand
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step done">
-            <div className="flow-step-dot">✓</div>Classify
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className={'flow-step' + (c.linked ? ' done' : '')}>
-            <div className="flow-step-dot">{c.linked ? '✓' : '…'}</div>Connect
-          </div>
-        </div>
+        <AiStepper
+          steps={[
+            { label: 'Ingest', desc: 'Signal received and timestamped', state: 'done' },
+            { label: 'Dedupe', desc: 'Checked against existing open signals', state: 'done' },
+            { label: 'Understand', desc: 'AI parsed language, journey, and intent', state: 'done' },
+            { label: 'Classify', desc: 'Severity and sentiment assigned', state: 'done' },
+            {
+              label: 'Connect',
+              desc: c.linked ? 'Matched to a known problem pattern' : 'Still checking for a matching pattern',
+              state: c.linked ? 'done' : 'active',
+            },
+          ]}
+        />
         {c.linked ? (
-          <Callout kind="acc" style={{ marginBottom: 0, fontSize: 11.5 }}>
+          <Callout kind="acc" style={{ marginBottom: 0, fontSize: 11.5, marginTop: 6 }}>
             Connected to{' '}
             <b className="tx-link" onClick={goToProblem}>
               {linkedProblem.id} — {linkedProblem.title}
             </b>
           </Callout>
         ) : (
-          <Callout kind="orange" style={{ marginBottom: 0, fontSize: 11.5 }}>Not yet linked to a known problem pattern.</Callout>
+          <Callout kind="orange" style={{ marginBottom: 0, fontSize: 11.5, marginTop: 6 }}>Not yet linked to a known problem pattern.</Callout>
         )}
       </div>
     </>

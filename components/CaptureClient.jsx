@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { classify } from '@/lib/helpers';
-import FlowStrip from './FlowStrip';
+import AiStepper from './AiStepper';
 import Callout from './Callout';
 
 const JOURNEYS = ['Money Transfer', 'Cards', 'KYC / Onboarding', 'Loans', 'Standing Orders', 'ATM', 'Digital Banking App', 'Account Services', 'Other'];
@@ -130,34 +130,38 @@ export default function CaptureClient({ session }) {
     <div className="grid g2" style={{ gridTemplateColumns: '1.1fr 1fr', alignItems: 'flex-start' }}>
       <div className="card">
         <div className="section-title" style={{ fontSize: 15, marginBottom: 3 }}>Tell us what happened</div>
-        <div className="section-hint" style={{ marginBottom: 18, display: 'block' }}>AI handles the structure — just describe it</div>
+        <div className="section-hint" style={{ marginBottom: 20, display: 'block' }}>AI handles the structure — just describe it</div>
 
-        <div className="form-row">
-          <label className="form-lbl">Source Channel<span className="req">*</span></label>
-          <select className="form-inp" value={channel} onChange={(e) => setChannel(e.target.value)}>
-            <option>Call Centre</option>
-            <option>Branch</option>
-            <option>Email</option>
-            <option>Digital App</option>
-            <option>Existing System</option>
-          </select>
+        <div className="form-section">
+          <div className="form-section-hd">Concern Details</div>
+          <div className="form-row">
+            <label className="form-lbl">Source Channel<span className="req">*</span></label>
+            <select className="form-inp" value={channel} onChange={(e) => setChannel(e.target.value)}>
+              <option>Call Centre</option>
+              <option>Branch</option>
+              <option>Email</option>
+              <option>Digital App</option>
+              <option>Existing System</option>
+            </select>
+          </div>
+          <div className="form-row">
+            <label className="form-lbl">What happened?<span className="req">*</span></label>
+            <textarea
+              className="form-inp"
+              style={{ minHeight: 130 }}
+              placeholder="Type or paste what the customer said, in their own words. Sinhala, Tamil, English, and code-mixed text are all supported."
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+            />
+          </div>
+          <div className="form-row" style={{ marginBottom: 0 }}>
+            <label className="form-lbl">Customer Name / ID <span className="section-hint">(optional)</span></label>
+            <input className="form-inp" placeholder="e.g. W.A. Perera / CIF-00019284" value={customer} onChange={(e) => setCustomer(e.target.value)} />
+          </div>
         </div>
-        <div className="form-row">
-          <label className="form-lbl">What happened?<span className="req">*</span></label>
-          <textarea
-            className="form-inp"
-            style={{ minHeight: 130 }}
-            placeholder="Type or paste what the customer said, in their own words. Sinhala, Tamil, English, and code-mixed text are all supported."
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-          />
-        </div>
-        <div className="form-row">
-          <label className="form-lbl">Customer Name / ID <span className="section-hint">(optional)</span></label>
-          <input className="form-inp" placeholder="e.g. W.A. Perera / CIF-00019284" value={customer} onChange={(e) => setCustomer(e.target.value)} />
-        </div>
-        <div className="form-row">
-          <label className="form-lbl">Attach</label>
+
+        <div className="form-section">
+          <div className="form-section-hd">Attachments <span className="section-hint">(optional)</span></div>
           <div className="attach-row">
             <button type="button" className="attach-btn" onClick={toggleVoiceNote}>🎙 Record Voice Note</button>
             <label className="attach-btn">
@@ -171,7 +175,7 @@ export default function CaptureClient({ session }) {
             <button type="button" className="attach-btn" onClick={() => setShowEmail((v) => !v)}>✉ Paste Forwarded Email</button>
           </div>
           {attachments.length > 0 && (
-            <div className="pill-list" style={{ marginTop: 8 }}>
+            <div className="pill-list" style={{ marginTop: 10 }}>
               {attachments.map((a, i) => (
                 <span className="pill" key={i}>
                   {a.type === 'voice' ? '🎙' : a.type === 'screenshot' ? '📷' : '📄'} {a.label}{' '}
@@ -181,24 +185,34 @@ export default function CaptureClient({ session }) {
             </div>
           )}
           {showEmail && (
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 10 }}>
               <textarea className="form-inp" placeholder="Paste the forwarded email content here…" style={{ minHeight: 70 }} value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           )}
         </div>
-        <button className="btn btn-p" onClick={startAIUnderstanding} disabled={phase === 'processing'} style={{ width: '100%', height: 36, justifyContent: 'center', fontSize: 12.5 }}>
+
+        <button
+          className={'btn btn-p' + (phase === 'processing' ? ' btn-loading' : '')}
+          onClick={startAIUnderstanding}
+          disabled={phase === 'processing'}
+          style={{ width: '100%', height: 40, justifyContent: 'center', fontSize: 12.5, marginTop: 4 }}
+        >
           {phase === 'processing' ? 'Understanding…' : 'Let AI Understand This'}
         </button>
       </div>
 
       <div>
-        <div className="card" style={{ marginBottom: 14 }}>
+        <div className="card" style={{ marginBottom: 16 }}>
           <div className="section-title">How this feeds the AI Concern Engine</div>
-          <FlowStrip steps={['Ingest', 'Clean & Dedupe', 'Understand', 'Classify', 'Connect']} style={{ padding: '4px 0' }} />
-          <div className="muted" style={{ fontSize: 11.5 }}>
-            A tracking ID is issued the moment you click &quot;Let AI Understand This&quot; — before processing starts. AI then infers journey, issue type, language, severity, sentiment,
-            customer type and urgency, and checks whether this connects to an existing problem. You can correct anything before confirming.
-          </div>
+          <AiStepper
+            steps={[
+              { label: 'Ingest', desc: 'A tracking ID is issued the moment you submit — before processing starts.', state: 'pending' },
+              { label: 'Clean & Dedupe', desc: 'Checked against other recent signals for duplicates.', state: 'pending' },
+              { label: 'Understand', desc: 'AI infers journey, issue type, and language.', state: 'pending' },
+              { label: 'Classify', desc: 'Severity, sentiment, urgency, and customer type are assigned.', state: 'pending' },
+              { label: 'Connect', desc: 'Checked against known problems — you can correct anything before confirming.', state: 'pending' },
+            ]}
+          />
         </div>
 
         {phase === 'processing' && (
