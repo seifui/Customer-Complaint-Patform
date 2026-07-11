@@ -6,7 +6,10 @@ import { useStore } from '@/lib/store';
 import { money, num } from '@/lib/helpers';
 import { SevBadge, StatusBadge } from './Badges';
 import FlowStrip from './FlowStrip';
-import ExplainModal, { ExplainTrigger } from './ExplainModal';
+import ExplainModal from './ExplainModal';
+import OverflowMenu from './OverflowMenu';
+import SlidePanel from './SlidePanel';
+import Callout from './Callout';
 
 function execResultText(p) {
   if (!p.impact.after) return 'No intervention started yet — awaiting owner and deadline.';
@@ -19,6 +22,7 @@ export default function DashboardClient() {
   const problems = useStore((s) => s.problems);
   const [explain, setExplain] = useState(null); // { problemId, kind }
   const [attnOpen, setAttnOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState(null);
 
   const execProblems = problems.filter((p) => p.executiveDecision);
   const bySeverity = { critical: 0, high: 0, medium: 0, low: 0 };
@@ -29,6 +33,7 @@ export default function DashboardClient() {
   const valueProtected = problems.reduce((s, p) => s + (p.impact.after ? p.impact.after.valueProtected || 0 : 0), 0);
   const improving = problems.filter((p) => p.impact.after).length;
   const allSorted = [...problems].sort((a, b) => (b.severity === 'critical') - (a.severity === 'critical') || b.concernCount - a.concernCount);
+  const detailsProblem = detailsId ? problems.find((p) => p.id === detailsId) : null;
 
   return (
     <>
@@ -37,14 +42,14 @@ export default function DashboardClient() {
           <div className="attn-card-icon">⚠</div>
           <div className="attn-card-body">
             <div className="attn-card-count">{execProblems.length} Problems Need Your Attention</div>
-            <div className="attn-card-sub">Each is awaiting an executive decision — click to see the full brief</div>
+            <div className="attn-card-sub">Each is awaiting an executive decision — click to see the list</div>
           </div>
           <div className="attn-card-breakdown">
             {bySeverity.critical > 0 && <span className="badge sev-critical">{bySeverity.critical} Critical</span>}
             {bySeverity.high > 0 && <span className="badge sev-high">{bySeverity.high} High</span>}
           </div>
           <div className={'attn-card-cta' + (attnOpen ? ' open' : '')}>
-            {attnOpen ? 'Hide details' : 'View details'}
+            {attnOpen ? 'Hide' : 'View'}
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 3.2l4 4 4-4" /></svg>
           </div>
         </div>
@@ -52,49 +57,49 @@ export default function DashboardClient() {
         {attnOpen && (
           <div className="attn-list">
             {execProblems.map((p) => (
-              <div className="exec-card" key={p.id}>
-                <div className="exec-card-hd">
+              <div className="pcard" key={p.id}>
+                <div className="pcard-hd">
                   <div>
-                    <div className="exec-card-title">{p.title}</div>
-                    <div className="muted mono" style={{ fontSize: 10 }}>{p.id}</div>
+                    <div className="pcard-title">{p.title}</div>
+                    <div className="pcard-id">{p.id}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <div className="pcard-badges">
                     <SevBadge s={p.severity} />
                     <StatusBadge s={p.status} />
                   </div>
                 </div>
-                <div className="exec-card-row"><b>What&apos;s happening:</b> {p.description}</div>
-                <div className="exec-card-row"><b>Why it matters:</b> {p.whyItMatters}</div>
-                <div className="grid g4" style={{ gap: 8, margin: '10px 0' }}>
-                  <div className="stat">
-                    <div className="stat-l">Customers Affected</div>
-                    <div className="stat-v" style={{ fontSize: 15 }}>{num(p.affectedCustomers)}</div>
+                <div className="pcard-stats">
+                  <div>
+                    <div className="pcard-stat-l">Affected</div>
+                    <div className="pcard-stat-v">{num(p.affectedCustomers)}</div>
                   </div>
-                  <div className="stat">
-                    <div className="stat-l">Trend</div>
-                    <div className="stat-v" style={{ fontSize: 15, color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>
+                  <div>
+                    <div className="pcard-stat-l">Value at Risk</div>
+                    <div className="pcard-stat-v">{money(p.valueAtRisk)}</div>
+                  </div>
+                  <div>
+                    <div className="pcard-stat-l">Trend</div>
+                    <div className="pcard-stat-v" style={{ color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>
                       {p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%
                     </div>
                   </div>
-                  <div className="stat">
-                    <div className="stat-l">Value at Risk</div>
-                    <div className="stat-v" style={{ fontSize: 15 }}>{money(p.valueAtRisk)}</div>
-                    <ExplainTrigger onOpen={() => setExplain({ problemId: p.id, kind: 'risk' })} />
-                  </div>
-                  <div className="stat">
-                    <div className="stat-l">Owner</div>
-                    <div className="stat-v" style={{ fontSize: 13 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</div>
+                  <div>
+                    <div className="pcard-stat-l">Owner</div>
+                    <div className="pcard-stat-v" style={{ fontSize: 12 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</div>
                   </div>
                 </div>
-                <div className="exec-card-row"><b>Current intervention status:</b> {execResultText(p)}</div>
-                {p.executiveDecision && (
-                  <div className="callout callout-orange" style={{ margin: '10px 0 0' }}>
-                    <b>Decision needed:</b> {p.executiveDecision}
+                <div className="pcard-ft">
+                  <span className="muted" style={{ fontSize: 10.5 }}>Last updated {p.startedAt !== '—' ? p.startedAt : 'not yet started'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button className="btn btn-p btn-sm" onClick={() => router.push('/problems/' + p.id)}>Open Workspace</button>
+                    <OverflowMenu
+                      items={[
+                        { label: 'View Details', onClick: () => setDetailsId(p.id) },
+                        { label: 'Explain Value at Risk', onClick: () => setExplain({ problemId: p.id, kind: 'risk' }) },
+                      ]}
+                    />
                   </div>
-                )}
-                <button className="btn btn-p btn-sm" style={{ marginTop: 10 }} onClick={() => router.push('/problems/' + p.id)}>
-                  Open Problem Workspace →
-                </button>
+                </div>
               </div>
             ))}
           </div>
@@ -180,6 +185,38 @@ export default function DashboardClient() {
           </div>
         </div>
       </div>
+
+      <SlidePanel open={!!detailsProblem} onClose={() => setDetailsId(null)} title={detailsProblem ? detailsProblem.id + ' — Details' : ''}>
+        {detailsProblem && (
+          <>
+            <div className="pdd-section">
+              <div className="pdd-section-hd">What&apos;s Happening</div>
+              <div className="pdd-text">{detailsProblem.description}</div>
+            </div>
+            <div className="pdd-section">
+              <div className="pdd-section-hd">Why It Matters</div>
+              <div className="pdd-text">{detailsProblem.whyItMatters}</div>
+            </div>
+            <div className="pdd-section">
+              <div className="pdd-section-hd">Current Intervention Status</div>
+              <div className="pdd-text">{execResultText(detailsProblem)}</div>
+            </div>
+            {detailsProblem.executiveDecision && (
+              <div className="pdd-section">
+                <div className="pdd-section-hd">Decision Needed</div>
+                <Callout kind="orange" style={{ marginBottom: 0 }}>{detailsProblem.executiveDecision}</Callout>
+              </div>
+            )}
+            <button
+              className="btn btn-p"
+              style={{ width: '100%', height: 38, justifyContent: 'center', marginTop: 4 }}
+              onClick={() => router.push('/problems/' + detailsProblem.id)}
+            >
+              Open Full Workspace →
+            </button>
+          </>
+        )}
+      </SlidePanel>
 
       <ExplainModal problemId={explain?.problemId} kind={explain?.kind} onClose={() => setExplain(null)} />
     </>

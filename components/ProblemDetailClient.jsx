@@ -12,6 +12,7 @@ import TaskCard from './TaskCard';
 import ConcernDetailPanel from './ConcernDetailPanel';
 import ExplainModal, { ExplainTrigger } from './ExplainModal';
 import TaskUpdateModal from './TaskUpdateModal';
+import SlidePanel from './SlidePanel';
 
 const TABS = [
   ['situation', "What's Happening"],
@@ -293,28 +294,33 @@ function PaneIntervention({ p, problemActions, onOpenTask, onGoIntervention }) {
           <div className="stat"><div className="stat-l">Target</div><div className="stat-v" style={{ fontSize: 13 }}>{p.target}</div></div>
           <div className="stat"><div className="stat-l">Deadline</div><div className="stat-v" style={{ fontSize: 13 }}>{p.deadline}</div></div>
         </div>
-        {!showForm ? (
-          <button className="btn btn-gh" style={{ marginTop: 12 }} onClick={() => setShowForm(true)}>+ Assign Owner / Set Deadline</button>
-        ) : (
-          <div className="card" style={{ marginTop: 10, background: 'var(--bg2)' }}>
-            <div className="grid g3" style={{ gap: 8 }}>
-              <div className="form-row" style={{ marginBottom: 0 }}>
-                <label className="form-lbl">Owner</label>
-                <input className="form-inp" placeholder="e.g. Ishara Jayasuriya" value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
-              </div>
-              <div className="form-row" style={{ marginBottom: 0 }}>
-                <label className="form-lbl">Target</label>
-                <input className="form-inp" placeholder="e.g. Reduce volume by 60%" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} />
-              </div>
-              <div className="form-row" style={{ marginBottom: 0 }}>
-                <label className="form-lbl">Deadline</label>
-                <input className="form-inp" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-              </div>
-            </div>
-            <button className="btn btn-p btn-sm" style={{ marginTop: 10 }} onClick={save}>Confirm Assignment</button>
-          </div>
-        )}
+        <button className="btn btn-gh" style={{ marginTop: 12 }} onClick={() => setShowForm(true)}>+ Assign Owner / Set Deadline</button>
       </div>
+
+      <SlidePanel
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="Assign Owner / Set Deadline"
+        footer={
+          <>
+            <button className="btn btn-gh" onClick={() => setShowForm(false)}>Cancel</button>
+            <button className="btn btn-p" onClick={save}>Confirm Assignment</button>
+          </>
+        }
+      >
+        <div className="form-row">
+          <label className="form-lbl">Owner</label>
+          <input className="form-inp" placeholder="e.g. Ishara Jayasuriya" value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
+        </div>
+        <div className="form-row">
+          <label className="form-lbl">Target</label>
+          <input className="form-inp" placeholder="e.g. Reduce volume by 60%" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} />
+        </div>
+        <div className="form-row" style={{ marginBottom: 0 }}>
+          <label className="form-lbl">Deadline</label>
+          <input className="form-inp" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+        </div>
+      </SlidePanel>
 
       <div className="card">
         <div className="section-title" style={{ fontSize: 12.5 }}>

@@ -47,9 +47,6 @@ export default function QueueTable({ list, onOpen }) {
                 <td>{c.journey}</td>
                 <td style={{ maxWidth: 280 }}>
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.summary}</div>
-                  <div className="muted" style={{ fontSize: 10, fontStyle: 'italic', marginTop: 2, whiteSpace: 'normal' }}>
-                    {tri.note}
-                  </div>
                 </td>
                 <td>
                   <SevBadge s={c.severity} />

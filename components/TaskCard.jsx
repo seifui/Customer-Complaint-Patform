@@ -46,7 +46,6 @@ export default function TaskCard({ a, onOpen }) {
         </span>
         <span>Due {a.deadline}</span>
       </div>
-      {a.customerOutcome && <div className="muted" style={{ fontSize: 10.5, marginTop: 5 }}>Customer outcome: {a.customerOutcome}</div>}
     </div>
   );
 }

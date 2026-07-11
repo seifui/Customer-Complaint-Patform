@@ -1,19 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Modal from './Modal';
+import SlidePanel from './SlidePanel';
 import Select from './Select';
 import { useStore } from '@/lib/store';
 
 export default function TaskUpdateModal({ taskId, onClose, onSaved }) {
   const actions = useStore((s) => s.actions);
   const a = taskId ? actions.find((x) => x.id === taskId) : null;
+  const saveRef = useRef(null);
 
   return (
-    <Modal open={!!a} onClose={onClose} title={a ? a.id + ' — ' + a.team : ''} footer={null}>
-      {a && <TaskForm key={a.id} action={a} onClose={onClose} onSaved={onSaved} />}
-    </Modal>
+    <SlidePanel
+      open={!!a}
+      onClose={onClose}
+      title={a ? a.id + ' — ' + a.team : ''}
+      footer={
+        <>
+          <button className="btn btn-gh" onClick={onClose}>Cancel</button>
+          <button className="btn btn-p" onClick={() => saveRef.current && saveRef.current()}>Save Update</button>
+        </>
+      }
+    >
+      {a && <TaskForm key={a.id} action={a} onClose={onClose} onSaved={onSaved} exposeSave={(fn) => { saveRef.current = fn; }} />}
+    </SlidePanel>
   );
 }
 
@@ -29,7 +40,7 @@ function initialFormFor(a) {
   };
 }
 
-function TaskForm({ action: a, onClose, onSaved }) {
+function TaskForm({ action: a, onClose, onSaved, exposeSave }) {
   const router = useRouter();
   const problems = useStore((s) => s.problems);
   const updateAction = useStore((s) => s.updateAction);
@@ -55,6 +66,10 @@ function TaskForm({ action: a, onClose, onSaved }) {
     onClose();
     if (onSaved) onSaved();
   }
+
+  useEffect(() => {
+    exposeSave(save);
+  });
 
   return (
     <>
@@ -114,7 +129,7 @@ function TaskForm({ action: a, onClose, onSaved }) {
         <label className="form-lbl">Customer Outcome</label>
         <input className="form-inp" value={form.outcome} onChange={(e) => setForm({ ...form, outcome: e.target.value })} placeholder="What does the customer experience once this ships?" />
       </div>
-      <div className="form-row">
+      <div className="form-row" style={{ marginBottom: 0 }}>
         <label className="form-lbl">Notes</label>
         <div style={{ fontSize: 11.5, color: 'var(--tx1)', marginBottom: 6 }}>
           {a.notes.length ? (
@@ -126,10 +141,6 @@ function TaskForm({ action: a, onClose, onSaved }) {
           )}
         </div>
         <textarea className="form-inp" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note…" style={{ minHeight: 50 }} />
-      </div>
-      <div className="modal-ft" style={{ margin: '14px -20px -18px', borderTop: '1px solid var(--bd)' }}>
-        <button className="btn btn-gh" onClick={onClose}>Cancel</button>
-        <button className="btn btn-p" onClick={save}>Save Update</button>
       </div>
     </>
   );
