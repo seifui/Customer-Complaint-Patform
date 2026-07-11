@@ -28,6 +28,10 @@ function isValidSLMobile(v) {
   return /^(?:\+94|0)7\d{8}$/.test(v.replace(/[\s-]/g, ''));
 }
 
+function isValidEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
 function friendlyStatus(concern, problem) {
   if (!concern.linked) {
     return concern.status === 'analyzing'
@@ -110,8 +114,11 @@ function ReportPane({ onTrackConcern }) {
   const problems = useStore((s) => s.problems);
 
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [mobile, setMobile] = useState('');
   const [mobileError, setMobileError] = useState('');
+  const [contactError, setContactError] = useState('');
   const [accountRef, setAccountRef] = useState('');
   const [area, setArea] = useState(SERVICE_AREAS[0]);
   const [desc, setDesc] = useState('');
@@ -138,8 +145,11 @@ function ReportPane({ onTrackConcern }) {
 
   function resetForm() {
     setName('');
+    setEmail('');
+    setEmailError('');
     setMobile('');
     setMobileError('');
+    setContactError('');
     setAccountRef('');
     setArea(SERVICE_AREAS[0]);
     setDesc('');
@@ -152,11 +162,23 @@ function ReportPane({ onTrackConcern }) {
     e.preventDefault();
     if (!desc.trim()) return;
 
+    const emailTrimmed = email.trim();
     const mobileTrimmed = mobile.trim();
+
+    if (!emailTrimmed && !mobileTrimmed) {
+      setContactError('Please provide either an email address or a mobile number so we can send your tracking number and contact you if necessary.');
+      return;
+    }
+    if (emailTrimmed && !isValidEmail(emailTrimmed)) {
+      setEmailError('Enter a valid email address, e.g. john.perera@email.com.');
+      return;
+    }
     if (mobileTrimmed && !isValidSLMobile(mobileTrimmed)) {
       setMobileError('Enter a valid Sri Lankan mobile number, e.g. 0771234567.');
       return;
     }
+    setContactError('');
+    setEmailError('');
     setMobileError('');
     setPhase('submitting');
 
@@ -167,7 +189,8 @@ function ReportPane({ onTrackConcern }) {
     setTimeout(() => {
       const cls = classify(desc.trim() + ' ' + area);
       const target = cls.target;
-      const customerLabel = (name.trim() || 'Anonymous') + (mobileTrimmed ? ' · ' + mobileTrimmed : '') + ' (' + (accountRef.trim() ? 'existing' : 'new') + ')';
+      const contactParts = [emailTrimmed, mobileTrimmed].filter(Boolean).join(' · ');
+      const customerLabel = (name.trim() || 'Anonymous') + (contactParts ? ' · ' + contactParts : '') + ' (' + (accountRef.trim() ? 'existing' : 'new') + ')';
       const concern = {
         id,
         channel: 'Digital App',
@@ -187,7 +210,7 @@ function ReportPane({ onTrackConcern }) {
         assignee: target ? problems.find((p) => p.id === target).teams[0] + ' Team' : '—',
       };
       addConcern(concern);
-      setResult({ id, linked: target ? problems.find((p) => p.id === target) : null });
+      setResult({ id, linked: target ? problems.find((p) => p.id === target) : null, hasEmail: !!emailTrimmed });
       setPhase('done');
     }, 900);
   }
@@ -201,18 +224,17 @@ function ReportPane({ onTrackConcern }) {
           </svg>
         </div>
         <div className="section-title" style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 20, justifyContent: 'center', marginBottom: 10 }}>
-          Concern Submitted Successfully
-        </div>
-        <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.65, marginBottom: 22 }}>
-          Thank you for contacting ConcernHub.
-          <br />
-          Your concern has been successfully submitted and is now being reviewed by our team.
+          Thank you! Your concern has been submitted successfully.
         </div>
 
         <div className="form-lbl" style={{ textAlign: 'center' }}>Tracking Number</div>
         <div className="pub-confirm-id">{result.id}</div>
         <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.65, marginBottom: 18 }}>
-          Please save this tracking number. You can use it anytime from the &quot;Check Status&quot; tab to track the progress of your concern.
+          Please save this tracking number.
+          <br />
+          {result.hasEmail
+            ? 'A confirmation email has been sent to the address you provided.'
+            : 'Use this tracking number to check the status of your concern from the "Check Status" tab.'}
         </div>
 
         {result.linked ? (
@@ -237,24 +259,36 @@ function ReportPane({ onTrackConcern }) {
 
   return (
     <form onSubmit={submit}>
+      <div className="form-row">
+        <label className="form-lbl">Full Name <span className="section-hint">(optional)</span></label>
+        <input className="form-inp" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. W.A. Perera" />
+      </div>
       <div className="grid g2" style={{ gap: 10 }}>
-        <div className="form-row">
-          <label className="form-lbl">Full Name <span className="section-hint">(optional)</span></label>
-          <input className="form-inp" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. W.A. Perera" />
+        <div className="form-row" style={{ marginBottom: 0 }}>
+          <label className="form-lbl">Email Address <span className="section-hint">(optional)</span></label>
+          <input
+            className="form-inp"
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(''); if (contactError) setContactError(''); }}
+            placeholder="e.g. john.perera@email.com"
+          />
+          {emailError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{emailError}</div>}
         </div>
-        <div className="form-row">
+        <div className="form-row" style={{ marginBottom: 0 }}>
           <label className="form-lbl">Mobile Number <span className="section-hint">(optional)</span></label>
           <input
             className="form-inp"
             value={mobile}
-            onChange={(e) => { setMobile(e.target.value); if (mobileError) setMobileError(''); }}
+            onChange={(e) => { setMobile(e.target.value); if (mobileError) setMobileError(''); if (contactError) setContactError(''); }}
             placeholder="e.g. 0771234567"
             inputMode="tel"
           />
           {mobileError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{mobileError}</div>}
         </div>
       </div>
-      <div className="form-row">
+      {contactError && <div style={{ color: 'var(--red)', fontSize: 11.5, lineHeight: 1.5, margin: '8px 0 0' }}>{contactError}</div>}
+      <div className="form-row" style={{ marginTop: 16 }}>
         <label className="form-lbl">Account / Card Number <span className="section-hint">(optional)</span></label>
         <input className="form-inp" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} placeholder="Helps us find your account faster" />
       </div>
