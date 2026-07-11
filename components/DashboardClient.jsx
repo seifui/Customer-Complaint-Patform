@@ -29,7 +29,7 @@ export default function DashboardClient() {
 
   return (
     <>
-      <div className="section-title" style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 26, letterSpacing: '-.01em', marginBottom: 16 }}>
+      <div className="section-title" style={{ fontFamily: 'var(--fc)', fontWeight: 700, fontSize: 18, letterSpacing: '-.005em', marginBottom: 16 }}>
         {execProblems.length} customer problems need your attention
       </div>
 

@@ -129,8 +129,8 @@ export default function CaptureClient({ session }) {
   return (
     <div className="grid g2" style={{ gridTemplateColumns: '1.1fr 1fr', alignItems: 'flex-start' }}>
       <div className="card">
-        <div style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 24, letterSpacing: '-.01em', marginBottom: 4 }}>Tell us what happened</div>
-        <div className="section-hint" style={{ marginBottom: 16, display: 'block' }}>AI handles the structure — just describe it</div>
+        <div className="section-title" style={{ fontSize: 15, marginBottom: 3 }}>Tell us what happened</div>
+        <div className="section-hint" style={{ marginBottom: 18, display: 'block' }}>AI handles the structure — just describe it</div>
 
         <div className="form-row">
           <label className="form-lbl">Source Channel<span className="req">*</span></label>

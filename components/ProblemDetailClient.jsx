@@ -52,8 +52,8 @@ export default function ProblemDetailClient({ problemId }) {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 23, letterSpacing: '-.01em', marginBottom: 8 }}>{p.title}</div>
-        <div style={{ color: 'var(--tx1)', fontSize: 12.5, lineHeight: 1.6, marginBottom: 12 }}>{p.description}</div>
+        <div style={{ fontFamily: 'var(--fc)', fontWeight: 700, fontSize: 17, letterSpacing: '-.005em', marginBottom: 8 }}>{p.title}</div>
+        <div style={{ color: 'var(--tx1)', fontSize: 12.5, lineHeight: 1.55, marginBottom: 12 }}>{p.description}</div>
         <div className="grid g4">
           <div className="stat"><div className="stat-l">Linked Concerns</div><div className="stat-v">{num(p.concernCount)}</div></div>
           <div className="stat"><div className="stat-l">Channels Involved</div><div className="stat-v">{p.channels.length}</div></div>
