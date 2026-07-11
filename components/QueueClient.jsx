@@ -6,6 +6,7 @@ import { triageInfo, TRIAGE_DEFS } from '@/lib/helpers';
 import { CHANNEL_ICON } from '@/lib/data';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
+import Select from './Select';
 
 const TRIAGE_ORDER = Object.keys(TRIAGE_DEFS).sort((a, b) => TRIAGE_DEFS[a].order - TRIAGE_DEFS[b].order);
 
@@ -58,19 +59,18 @@ export default function QueueClient() {
           value={filters.q}
           onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
         />
-        <select className="fi" value={filters.channel} onChange={(e) => setFilters((f) => ({ ...f, channel: e.target.value }))}>
-          <option value="">All Channels</option>
-          {Object.keys(CHANNEL_ICON).map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <select className="fi" value={filters.severity} onChange={(e) => setFilters((f) => ({ ...f, severity: e.target.value }))}>
-          <option value="">All Severities</option>
-          <option>critical</option>
-          <option>high</option>
-          <option>medium</option>
-          <option>low</option>
-        </select>
+        <Select
+          variant="pill"
+          value={filters.channel}
+          onChange={(v) => setFilters((f) => ({ ...f, channel: v }))}
+          options={[{ value: '', label: 'All Channels' }, ...Object.keys(CHANNEL_ICON)]}
+        />
+        <Select
+          variant="pill"
+          value={filters.severity}
+          onChange={(v) => setFilters((f) => ({ ...f, severity: v }))}
+          options={[{ value: '', label: 'All Severities' }, 'critical', 'high', 'medium', 'low']}
+        />
         <button className="btn btn-gh" onClick={() => setFilters({ channel: '', severity: '', triage: '', q: '' })}>Reset</button>
       </div>
 

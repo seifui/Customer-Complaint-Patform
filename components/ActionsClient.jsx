@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import Callout from './Callout';
+import Select from './Select';
 import TaskCard from './TaskCard';
 import TaskUpdateModal from './TaskUpdateModal';
 
@@ -35,21 +36,27 @@ export default function ActionsClient() {
         target → progress → customer outcome.
       </Callout>
       <div className="fb">
-        <select className="fi" value={filters.problem} onChange={(e) => setFilters({ ...filters, problem: e.target.value })}>
-          <option value="">All Problems</option>
-          {problems.map((p) => (
-            <option key={p.id} value={p.id}>{p.id} — {p.title.length > 26 ? p.title.slice(0, 26) + '…' : p.title}</option>
-          ))}
-        </select>
-        <select className="fi" value={filters.team} onChange={(e) => setFilters({ ...filters, team: e.target.value })}>
-          <option value="">All Teams</option>
-          {TEAMS.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <select className="fi" value={filters.owner} onChange={(e) => setFilters({ ...filters, owner: e.target.value })}>
-          <option value="">All Owners</option>
-          <option value="Unassigned">Unassigned</option>
-          {owners.map((o) => <option key={o}>{o}</option>)}
-        </select>
+        <Select
+          variant="pill"
+          value={filters.problem}
+          onChange={(v) => setFilters({ ...filters, problem: v })}
+          options={[
+            { value: '', label: 'All Problems' },
+            ...problems.map((p) => ({ value: p.id, label: p.id + ' — ' + (p.title.length > 26 ? p.title.slice(0, 26) + '…' : p.title) })),
+          ]}
+        />
+        <Select
+          variant="pill"
+          value={filters.team}
+          onChange={(v) => setFilters({ ...filters, team: v })}
+          options={[{ value: '', label: 'All Teams' }, ...TEAMS]}
+        />
+        <Select
+          variant="pill"
+          value={filters.owner}
+          onChange={(v) => setFilters({ ...filters, owner: v })}
+          options={[{ value: '', label: 'All Owners' }, 'Unassigned', ...owners]}
+        />
         <button className="btn btn-gh" onClick={() => setFilters({ team: '', owner: '', problem: '' })}>Reset</button>
       </div>
       <div className="kanban">

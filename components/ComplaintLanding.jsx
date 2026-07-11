@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { classify } from '@/lib/helpers';
+import Select from './Select';
 
 const SERVICE_AREAS = [
   'Money Transfer',
@@ -180,9 +181,7 @@ function ReportPane() {
       </div>
       <div className="form-row">
         <label className="form-lbl">What&apos;s this about?</label>
-        <select className="form-inp" value={area} onChange={(e) => setArea(e.target.value)}>
-          {SERVICE_AREAS.map((a) => <option key={a}>{a}</option>)}
-        </select>
+        <Select value={area} onChange={setArea} options={SERVICE_AREAS} />
       </div>
       <div className="form-row">
         <label className="form-lbl">Tell us what happened<span className="req">*</span></label>

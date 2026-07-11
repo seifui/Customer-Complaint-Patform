@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store';
 import { classify } from '@/lib/helpers';
 import AiStepper from './AiStepper';
 import Callout from './Callout';
+import Select from './Select';
 
 const JOURNEYS = ['Money Transfer', 'Cards', 'KYC / Onboarding', 'Loans', 'Standing Orders', 'ATM', 'Digital Banking App', 'Account Services', 'Other'];
 const LANGS = ['English', 'Sinhala', 'Sinhala (romanized)', 'Tamil', 'Code-mixed'];
@@ -136,13 +137,11 @@ export default function CaptureClient({ session }) {
           <div className="form-section-hd">Concern Details</div>
           <div className="form-row">
             <label className="form-lbl">Source Channel<span className="req">*</span></label>
-            <select className="form-inp" value={channel} onChange={(e) => setChannel(e.target.value)}>
-              <option>Call Centre</option>
-              <option>Branch</option>
-              <option>Email</option>
-              <option>Digital App</option>
-              <option>Existing System</option>
-            </select>
+            <Select
+              value={channel}
+              onChange={setChannel}
+              options={['Call Centre', 'Branch', 'Email', 'Digital App', 'Existing System']}
+            />
           </div>
           <div className="form-row">
             <label className="form-lbl">What happened?<span className="req">*</span></label>
@@ -236,9 +235,7 @@ export default function CaptureClient({ session }) {
             <div className="grid g2" style={{ gap: 10, marginBottom: 12 }}>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Journey</label>
-                <select className="form-inp" value={review.journey} onChange={(e) => setReview({ ...review, journey: e.target.value })}>
-                  {JOURNEYS.map((j) => <option key={j}>{j}</option>)}
-                </select>
+                <Select value={review.journey} onChange={(v) => setReview({ ...review, journey: v })} options={JOURNEYS} />
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Issue Type</label>
@@ -246,42 +243,53 @@ export default function CaptureClient({ session }) {
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Language</label>
-                <select className="form-inp" value={review.lang} onChange={(e) => setReview({ ...review, lang: e.target.value })}>
-                  {LANGS.map((l) => <option key={l}>{l}</option>)}
-                </select>
+                <Select value={review.lang} onChange={(v) => setReview({ ...review, lang: v })} options={LANGS} />
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Customer Type</label>
-                <select className="form-inp" value={review.custType} onChange={(e) => setReview({ ...review, custType: e.target.value })}>
-                  <option>Existing customer</option>
-                  <option>New customer</option>
-                </select>
+                <Select
+                  value={review.custType}
+                  onChange={(v) => setReview({ ...review, custType: v })}
+                  options={['Existing customer', 'New customer']}
+                />
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Severity</label>
-                <select className="form-inp" value={review.severity} onChange={(e) => setReview({ ...review, severity: e.target.value })}>
-                  <option value="critical">critical</option>
-                  <option value="high">high</option>
-                  <option value="medium">medium</option>
-                  <option value="low">low</option>
-                </select>
+                <Select
+                  value={review.severity}
+                  onChange={(v) => setReview({ ...review, severity: v })}
+                  options={[
+                    { value: 'critical', label: 'critical' },
+                    { value: 'high', label: 'high' },
+                    { value: 'medium', label: 'medium' },
+                    { value: 'low', label: 'low' },
+                  ]}
+                />
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Sentiment</label>
-                <select className="form-inp" value={review.sentiment} onChange={(e) => setReview({ ...review, sentiment: e.target.value })}>
-                  <option value="angry">angry</option>
-                  <option value="frustrated">frustrated</option>
-                  <option value="neutral">neutral</option>
-                  <option value="positive">positive</option>
-                </select>
+                <Select
+                  value={review.sentiment}
+                  onChange={(v) => setReview({ ...review, sentiment: v })}
+                  options={[
+                    { value: 'angry', label: 'angry' },
+                    { value: 'frustrated', label: 'frustrated' },
+                    { value: 'neutral', label: 'neutral' },
+                    { value: 'positive', label: 'positive' },
+                  ]}
+                />
               </div>
               <div className="form-row" style={{ marginBottom: 0 }}>
                 <label className="form-lbl">Urgency</label>
-                <select className="form-inp" value={review.urgency} onChange={(e) => setReview({ ...review, urgency: e.target.value })}>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
+                <Select
+                  value={review.urgency}
+                  onChange={(v) => setReview({ ...review, urgency: v })}
+                  options={[
+                    { value: 'High', label: 'High' },
+                    { value: 'Medium', label: 'Medium' },
+                    { value: 'Low', label: 'Low' },
+                  ]}
+                />
               </div>
             </div>
 

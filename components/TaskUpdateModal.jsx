@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from './Modal';
+import Select from './Select';
 import { useStore } from '@/lib/store';
 
 export default function TaskUpdateModal({ taskId, onClose, onSaved }) {
@@ -99,11 +100,15 @@ function TaskForm({ action: a, onClose, onSaved }) {
       </div>
       <div className="form-row">
         <label className="form-lbl">Status</label>
-        <select className="form-inp" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="done">Done</option>
-        </select>
+        <Select
+          value={form.status}
+          onChange={(v) => setForm({ ...form, status: v })}
+          options={[
+            { value: 'todo', label: 'To Do' },
+            { value: 'in-progress', label: 'In Progress' },
+            { value: 'done', label: 'Done' },
+          ]}
+        />
       </div>
       <div className="form-row">
         <label className="form-lbl">Customer Outcome</label>
