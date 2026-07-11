@@ -103,7 +103,7 @@ export default function ComplaintLanding() {
         </div>
       </div>
 
-      <div className="pub-footer">ConcernHub — a demo instance for internal review. Not a live banking service.</div>
+      <div className="pub-footer">© 2026 ConcernHub. Every Concern. One Place. Resolved.</div>
     </div>
   );
 }
