@@ -49,7 +49,7 @@ export default function AppShell({ session, children }) {
             return (
               <Link key={it.href} href={it.href} className={'sb-i' + (active ? ' on' : '')}>
                 <NavIcon type={it.iconType} />
-                <span>{it.label}</span>
+                <span className="sb-i-label">{it.label}</span>
                 {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
               </Link>
             );
