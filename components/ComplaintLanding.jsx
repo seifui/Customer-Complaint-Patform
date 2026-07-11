@@ -50,7 +50,7 @@ export default function ComplaintLanding() {
           </div>
         </div>
         <div className="pub-nav-right">
-          <Link className="pub-nav-link" href="/login">Staff Login →</Link>
+          <Link className="btn btn-acc pub-login-btn" href="/login">Login</Link>
         </div>
       </div>
 

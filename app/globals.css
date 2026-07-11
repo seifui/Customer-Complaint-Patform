@@ -146,7 +146,10 @@ a{color:inherit;text-decoration:none}
 .btn-gh{background:var(--bg1);color:var(--tx1);border-color:var(--bd2)}
 .btn-gh:hover{color:var(--tx0);background:var(--bg2);border-color:var(--tx3)}
 .btn-acc{background:var(--acc);color:#fff;box-shadow:var(--shadow-xs)}
-.btn-acc:hover{background:var(--acc-hov);box-shadow:var(--shadow-sm)}
+.btn-acc:hover{background:var(--acc-hov);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.btn-acc:active{transform:translateY(1px)}
+
+.pub-login-btn{height:42px;padding:0 22px;border-radius:11px;font-size:13px}
 .btn-sm{height:28px;padding:0 12px;font-size:11px;border-radius:8px}
 .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none}
 .btn-loading{color:transparent!important;pointer-events:none;position:relative}
