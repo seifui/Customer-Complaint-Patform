@@ -3,11 +3,9 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction } from '@/lib/actions';
-import { useStore } from '@/lib/store';
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, null);
-  const resetDemoData = useStore((s) => s.resetDemoData);
 
   return (
     <div className="login-wrap">
@@ -22,7 +20,7 @@ export default function LoginForm() {
         <form action={formAction}>
           <div className="form-row">
             <label className="form-lbl">Email</label>
-            <input className="form-inp" type="email" name="email" required placeholder="you@cci.demo" />
+            <input className="form-inp" type="email" name="email" required placeholder="you@yourbank.com" />
           </div>
           <div className="form-row">
             <label className="form-lbl">Password</label>
@@ -35,16 +33,6 @@ export default function LoginForm() {
 
         <div className="login-hint">
           <Link href="/complaint" className="tx-link">Are you a customer? Report a concern instead →</Link>
-          <br />
-          <span
-            className="tx-link"
-            onClick={() => {
-              resetDemoData();
-              window.location.reload();
-            }}
-          >
-            Reset demo data
-          </span>
         </div>
       </div>
     </div>
