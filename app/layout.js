@@ -2,8 +2,8 @@ import './globals.css';
 import StoreSync from '@/components/StoreSync';
 
 export const metadata = {
-  title: 'Concern Intelligence Platform · Sri Lanka',
-  description: 'Customer Concern Intelligence Platform — capture, understand, connect, intervene, and measure.',
+  title: 'ConcernHub',
+  description: 'ConcernHub — Every Concern. One Place. Resolved. Capture, understand, connect, intervene, and measure.',
 };
 
 export default function RootLayout({ children }) {

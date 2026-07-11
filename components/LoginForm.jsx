@@ -12,9 +12,10 @@ export default function LoginForm() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="login-mark">CCI</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="login-logo" />
         <div className="login-title">Sign in</div>
-        <div className="login-sub">Customer Concern Intelligence Platform · Sri Lanka</div>
+        <div className="login-sub">Sign in to your ConcernHub workspace</div>
 
         {state?.error && <div className="login-err">{state.error}</div>}
 

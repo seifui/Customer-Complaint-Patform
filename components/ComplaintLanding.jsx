@@ -43,11 +43,8 @@ export default function ComplaintLanding() {
     <div className="pub">
       <div className="pub-nav">
         <div className="pub-nav-brand">
-          <div className="sb-mark">CCI</div>
-          <div className="sb-brand">
-            <div className="sb-brand-t">Concern Intelligence</div>
-            <div className="sb-brand-s">Platform · Sri Lanka</div>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="pub-nav-logo" />
         </div>
         <div className="pub-nav-right">
           <Link className="btn btn-acc pub-login-btn" href="/login">Login</Link>
@@ -83,7 +80,7 @@ export default function ComplaintLanding() {
         </div>
       </div>
 
-      <div className="pub-footer">Customer Concern Intelligence Platform — a demo instance for internal review. Not a live banking service.</div>
+      <div className="pub-footer">ConcernHub — a demo instance for internal review. Not a live banking service.</div>
     </div>
   );
 }

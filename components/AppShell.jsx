@@ -37,10 +37,10 @@ export default function AppShell({ session, children }) {
       {/* SIDEBAR */}
       <div className="sb">
         <div className="sb-logo">
-          <div className="sb-mark">CCI</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo-icon.png" alt="ConcernHub" className="sb-mark-img" />
           <div className="sb-brand">
-            <div className="sb-brand-t">Concern Intelligence</div>
-            <div className="sb-brand-s">Platform · Sri Lanka</div>
+            <div className="sb-brand-t">Concern<span className="brand-hub">Hub</span></div>
           </div>
         </div>
         <div className="sb-nav">
