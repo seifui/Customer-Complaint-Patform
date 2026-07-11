@@ -493,6 +493,7 @@ label.attach-btn{display:inline-flex}
 .pub-toggle-opt{flex:1;text-align:center;padding:9px 12px;border-radius:var(--rpill);font-size:12px;font-weight:600;font-family:var(--fc);color:var(--tx2);cursor:pointer;transition:color .15s var(--ease),background .15s var(--ease),box-shadow .15s var(--ease)}
 .pub-toggle-opt.on{background:var(--bg1);color:var(--tx0);box-shadow:var(--shadow-xs)}
 
+.pub-success-icon{width:52px;height:52px;border-radius:50%;background:var(--green-d);color:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
 .pub-confirm-id{font-family:var(--fs);font-weight:600;font-size:32px;letter-spacing:-.01em;text-align:center;padding:20px;background:var(--acc-d2);border:1px solid var(--acc-d3);border-radius:var(--r5);margin:18px 0}
 .pub-status-row{display:flex;align-items:flex-start;gap:11px;padding:15px 0;border-bottom:1px solid var(--bd)}
 .pub-status-row:last-child{border-bottom:none}

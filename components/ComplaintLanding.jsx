@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { classify } from '@/lib/helpers';
@@ -24,6 +24,10 @@ const FEATURES = [
   { ico: '👀', t: 'A real team reviews every report', s: "It's not just a form into a void — every concern is read, connected to related reports, and routed to the right team." },
 ];
 
+function isValidSLMobile(v) {
+  return /^(?:\+94|0)7\d{8}$/.test(v.replace(/[\s-]/g, ''));
+}
+
 function friendlyStatus(concern, problem) {
   if (!concern.linked) {
     return concern.status === 'analyzing'
@@ -38,6 +42,17 @@ function friendlyStatus(concern, problem) {
 
 export default function ComplaintLanding() {
   const [mode, setMode] = useState('report'); // report | status
+  const [trackPrefill, setTrackPrefill] = useState(null); // { id } | null
+
+  function goToTab(next) {
+    setTrackPrefill(null);
+    setMode(next);
+  }
+
+  function trackConcern(id) {
+    setTrackPrefill({ id });
+    setMode('status');
+  }
 
   return (
     <div className="pub">
@@ -73,10 +88,14 @@ export default function ComplaintLanding() {
       <div className="pub-section">
         <div className="pub-card">
           <div className="pub-toggle">
-            <div className={'pub-toggle-opt' + (mode === 'report' ? ' on' : '')} onClick={() => setMode('report')}>Report a Concern</div>
-            <div className={'pub-toggle-opt' + (mode === 'status' ? ' on' : '')} onClick={() => setMode('status')}>Check Status</div>
+            <div className={'pub-toggle-opt' + (mode === 'report' ? ' on' : '')} onClick={() => goToTab('report')}>Report a Concern</div>
+            <div className={'pub-toggle-opt' + (mode === 'status' ? ' on' : '')} onClick={() => goToTab('status')}>Check Status</div>
           </div>
-          {mode === 'report' ? <ReportPane /> : <StatusPane />}
+          {mode === 'report' ? (
+            <ReportPane onTrackConcern={trackConcern} />
+          ) : (
+            <StatusPane initialQuery={trackPrefill?.id || ''} autoSearch={!!trackPrefill} />
+          )}
         </div>
       </div>
 
@@ -85,34 +104,74 @@ export default function ComplaintLanding() {
   );
 }
 
-function ReportPane() {
-  const nextConcernId = useStore((s) => s.nextConcernId);
+function ReportPane({ onTrackConcern }) {
+  const nextPublicTrackingId = useStore((s) => s.nextPublicTrackingId);
   const addConcern = useStore((s) => s.addConcern);
   const problems = useStore((s) => s.problems);
 
   const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [mobileError, setMobileError] = useState('');
   const [accountRef, setAccountRef] = useState('');
   const [area, setArea] = useState(SERVICE_AREAS[0]);
   const [desc, setDesc] = useState('');
+  const [attachments, setAttachments] = useState([]);
   const [phase, setPhase] = useState('form'); // form | submitting | done
   const [result, setResult] = useState(null);
+  const fileInputScreenshot = useRef(null);
+  const fileInputDoc = useRef(null);
+
+  function toggleVoiceNote() {
+    setAttachments((prev) => {
+      const idx = prev.findIndex((a) => a.type === 'voice');
+      if (idx >= 0) return prev.filter((_, i) => i !== idx);
+      return [...prev, { type: 'voice', label: 'Voice note (0:24)' }];
+    });
+  }
+  function attachFile(type, file) {
+    if (!file) return;
+    setAttachments((prev) => [...prev, { type, label: file.name }]);
+  }
+  function removeAttachment(i) {
+    setAttachments((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function resetForm() {
+    setName('');
+    setMobile('');
+    setMobileError('');
+    setAccountRef('');
+    setArea(SERVICE_AREAS[0]);
+    setDesc('');
+    setAttachments([]);
+    setResult(null);
+    setPhase('form');
+  }
 
   function submit(e) {
     e.preventDefault();
     if (!desc.trim()) return;
+
+    const mobileTrimmed = mobile.trim();
+    if (mobileTrimmed && !isValidSLMobile(mobileTrimmed)) {
+      setMobileError('Enter a valid Sri Lankan mobile number, e.g. 0771234567.');
+      return;
+    }
+    setMobileError('');
     setPhase('submitting');
 
-    const id = nextConcernId();
+    const id = nextPublicTrackingId();
     const now = new Date();
     const stamp = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
 
     setTimeout(() => {
       const cls = classify(desc.trim() + ' ' + area);
       const target = cls.target;
+      const customerLabel = (name.trim() || 'Anonymous') + (mobileTrimmed ? ' · ' + mobileTrimmed : '') + ' (' + (accountRef.trim() ? 'existing' : 'new') + ')';
       const concern = {
         id,
         channel: 'Digital App',
-        customer: (name.trim() || 'Anonymous') + ' (' + (accountRef.trim() ? 'existing' : 'new') + ')',
+        customer: customerLabel,
         journey: area === 'Other' ? cls.journey : area,
         lang: cls.lang,
         raw: desc.trim(),
@@ -135,31 +194,43 @@ function ReportPane() {
 
   if (phase === 'done' && result) {
     return (
-      <div>
-        <div className="section-title" style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 20 }}>Thank you — we&apos;ve got it.</div>
-        <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Save this reference number to check your status any time.</div>
+      <div style={{ textAlign: 'center' }}>
+        <div className="pub-success-icon">
+          <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2.5 7.2l3 3L11.5 3.8" />
+          </svg>
+        </div>
+        <div className="section-title" style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 20, justifyContent: 'center', marginBottom: 10 }}>
+          Concern Submitted Successfully
+        </div>
+        <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.65, marginBottom: 22 }}>
+          Thank you for contacting ConcernHub.
+          <br />
+          Your concern has been successfully submitted and is now being reviewed by our team.
+        </div>
+
+        <div className="form-lbl" style={{ textAlign: 'center' }}>Tracking Number</div>
         <div className="pub-confirm-id">{result.id}</div>
+        <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.65, marginBottom: 18 }}>
+          Please save this tracking number. You can use it anytime from the &quot;Check Status&quot; tab to track the progress of your concern.
+        </div>
+
         {result.linked ? (
-          <div className="callout callout-acc">
+          <div className="callout callout-acc" style={{ textAlign: 'left' }}>
             This matches a pattern we&apos;re already looking into, so it&apos;s been connected straight to the team already working on it.
           </div>
         ) : (
-          <div className="callout callout-blue">A member of our team will review this and reach out if we need more details.</div>
+          <div className="callout callout-blue" style={{ textAlign: 'left' }}>A member of our team will review this and reach out if we need more details.</div>
         )}
-        <button
-          className="btn btn-gh"
-          style={{ width: '100%', height: 36, justifyContent: 'center' }}
-          onClick={() => {
-            setName('');
-            setAccountRef('');
-            setArea(SERVICE_AREAS[0]);
-            setDesc('');
-            setResult(null);
-            setPhase('form');
-          }}
-        >
-          Report Another Concern
-        </button>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <button className="btn btn-p" style={{ flex: 1, height: 40, justifyContent: 'center' }} onClick={() => onTrackConcern(result.id)}>
+            Track My Concern
+          </button>
+          <button className="btn btn-gh" style={{ flex: 1, height: 40, justifyContent: 'center' }} onClick={resetForm}>
+            Submit Another Concern
+          </button>
+        </div>
       </div>
     );
   }
@@ -168,16 +239,27 @@ function ReportPane() {
     <form onSubmit={submit}>
       <div className="grid g2" style={{ gap: 10 }}>
         <div className="form-row">
-          <label className="form-lbl">Your Name <span className="section-hint">(optional)</span></label>
+          <label className="form-lbl">Full Name <span className="section-hint">(optional)</span></label>
           <input className="form-inp" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. W.A. Perera" />
         </div>
         <div className="form-row">
-          <label className="form-lbl">Account / Card Number <span className="section-hint">(optional)</span></label>
-          <input className="form-inp" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} placeholder="Helps us find your account faster" />
+          <label className="form-lbl">Mobile Number <span className="section-hint">(optional)</span></label>
+          <input
+            className="form-inp"
+            value={mobile}
+            onChange={(e) => { setMobile(e.target.value); if (mobileError) setMobileError(''); }}
+            placeholder="e.g. 0771234567"
+            inputMode="tel"
+          />
+          {mobileError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{mobileError}</div>}
         </div>
       </div>
       <div className="form-row">
-        <label className="form-lbl">What&apos;s this about?</label>
+        <label className="form-lbl">Account / Card Number <span className="section-hint">(optional)</span></label>
+        <input className="form-inp" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} placeholder="Helps us find your account faster" />
+      </div>
+      <div className="form-row">
+        <label className="form-lbl">What&apos;s this about?<span className="req">*</span></label>
         <Select value={area} onChange={setArea} options={SERVICE_AREAS} />
       </div>
       <div className="form-row">
@@ -191,19 +273,45 @@ function ReportPane() {
           onChange={(e) => setDesc(e.target.value)}
         />
       </div>
-      <button className="btn btn-p" type="submit" disabled={phase === 'submitting'} style={{ width: '100%', height: 40, justifyContent: 'center', fontSize: 13 }}>
+      <div className="form-row">
+        <label className="form-lbl">Attachments <span className="section-hint">(optional)</span></label>
+        <div className="attach-row">
+          <button type="button" className="attach-btn" onClick={toggleVoiceNote}>🎙 Record Voice Note</button>
+          <label className="attach-btn">
+            📷 Upload Screenshot
+            <input ref={fileInputScreenshot} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => attachFile('screenshot', e.target.files[0])} />
+          </label>
+          <label className="attach-btn">
+            📄 Upload Document
+            <input ref={fileInputDoc} type="file" style={{ display: 'none' }} onChange={(e) => attachFile('document', e.target.files[0])} />
+          </label>
+        </div>
+        {attachments.length > 0 && (
+          <div className="pill-list" style={{ marginTop: 8 }}>
+            {attachments.map((a, i) => (
+              <span className="pill" key={i}>
+                {a.type === 'voice' ? '🎙' : a.type === 'screenshot' ? '📷' : '📄'} {a.label}{' '}
+                <span className="tx-link" style={{ marginLeft: 4 }} onClick={() => removeAttachment(i)}>✕</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <button className={'btn btn-p' + (phase === 'submitting' ? ' btn-loading' : '')} type="submit" disabled={phase === 'submitting'} style={{ width: '100%', height: 40, justifyContent: 'center', fontSize: 13 }}>
         {phase === 'submitting' ? 'Submitting…' : 'Submit'}
       </button>
     </form>
   );
 }
 
-function StatusPane() {
+function StatusPane({ initialQuery = '', autoSearch = false }) {
   const concerns = useStore((s) => s.concerns);
   const problems = useStore((s) => s.problems);
-  const [query, setQuery] = useState('');
-  const [searched, setSearched] = useState(false);
-  const [found, setFound] = useState(null);
+  const [query, setQuery] = useState(initialQuery);
+  const [searched, setSearched] = useState(autoSearch);
+  const [found, setFound] = useState(() => (
+    autoSearch ? concerns.find((x) => x.id.toLowerCase() === initialQuery.trim().toLowerCase()) || null : null
+  ));
 
   function lookup(e) {
     e.preventDefault();
@@ -217,7 +325,7 @@ function StatusPane() {
   return (
     <div>
       <form onSubmit={lookup} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-        <input className="form-inp" placeholder="e.g. CCI-10032" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="form-inp" placeholder="e.g. CH-2026-000128" value={query} onChange={(e) => setQuery(e.target.value)} />
         <button className="btn btn-p" type="submit" style={{ flexShrink: 0 }}>Check</button>
       </form>
       <div className="muted" style={{ fontSize: 11, marginBottom: 16 }}>Enter the reference number you received when you reported your concern.</div>
