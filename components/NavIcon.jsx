@@ -1,5 +1,5 @@
 export default function NavIcon({ type }) {
-  const common = { viewBox: '0 0 14 14', fill: 'none', stroke: 'currentColor', strokeWidth: '1.4' };
+  const common = { viewBox: '0 0 14 14', fill: 'none', stroke: 'currentColor', strokeWidth: '1.6' };
   switch (type) {
     case 'rects':
       return (
