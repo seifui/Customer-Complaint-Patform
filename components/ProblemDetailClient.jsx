@@ -47,7 +47,7 @@ export default function ProblemDetailClient({ problemId }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <button className="btn btn-gh btn-sm" onClick={() => router.push('/problems')}>← Back to Problem Workspace</button>
+        <button className="btn btn-gh btn-sm" onClick={() => router.push('/problems')}>← Back</button>
         <SevBadge s={p.severity} />
         <StatusBadge s={p.status} />
       </div>

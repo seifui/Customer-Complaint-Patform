@@ -47,14 +47,11 @@ export default function AppShell({ session, children }) {
           {NAV_ITEMS.filter((it) => it.roles.includes(session.role)).map((it) => {
             const active = pathname === it.href || (it.href !== '/' && pathname.startsWith(it.href + '/'));
             return (
-              <div key={it.href}>
-                {it.dividerBefore && <div className="sb-nav-divider" />}
-                <Link href={it.href} className={'sb-i' + (active ? ' on' : '')}>
-                  <NavIcon type={it.iconType} />
-                  <span className="sb-i-label">{it.label}</span>
-                  {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
-                </Link>
-              </div>
+              <Link key={it.href} href={it.href} className={'sb-i' + (active ? ' on' : '')}>
+                <NavIcon type={it.iconType} />
+                <span className="sb-i-label">{it.label}</span>
+                {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
+              </Link>
             );
           })}
         </div>
