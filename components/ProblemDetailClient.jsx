@@ -23,7 +23,7 @@ const TABS = [
   ['impact', 'Did It Work?'],
 ];
 
-export default function ProblemDetailClient({ problemId }) {
+export default function ProblemDetailClient({ problemId, session }) {
   const router = useRouter();
   const problems = useStore((s) => s.problems);
   const actions = useStore((s) => s.actions);
@@ -86,7 +86,7 @@ export default function ProblemDetailClient({ problemId }) {
       )}
       {tab === 'impact' && <PaneImpact p={p} onExplain={() => setExplain({ problemId: p.id, kind: 'protected' })} onGoIntervention={() => setTab('intervention')} />}
 
-      <ConcernDetailPanel concernId={openConcernId} onClose={() => setOpenConcernId(null)} />
+      <ConcernDetailPanel concernId={openConcernId} onClose={() => setOpenConcernId(null)} session={session} />
       <ExplainModal problemId={explain?.problemId} kind={explain?.kind} onClose={() => setExplain(null)} />
       <TaskUpdateModal taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </>

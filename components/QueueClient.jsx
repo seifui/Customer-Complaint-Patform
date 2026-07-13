@@ -10,7 +10,7 @@ import Select from './Select';
 
 const TRIAGE_ORDER = Object.keys(TRIAGE_DEFS).sort((a, b) => TRIAGE_DEFS[a].order - TRIAGE_DEFS[b].order);
 
-export default function QueueClient() {
+export default function QueueClient({ session }) {
   const concerns = useStore((s) => s.concerns);
   const problems = useStore((s) => s.problems);
   const [filters, setFilters] = useState({ channel: '', severity: '', triage: '', q: '' });
@@ -78,7 +78,7 @@ export default function QueueClient() {
         <QueueTable list={filtered} onOpen={setOpenId} />
       </div>
 
-      <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} />
+      <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} session={session} />
     </>
   );
 }

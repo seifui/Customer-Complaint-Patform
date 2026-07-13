@@ -1,6 +1,6 @@
 'use client';
 
-import Modal from './Modal';
+import SlidePanel from './SlidePanel';
 import Callout from './Callout';
 import { BarList } from './Charts';
 import { ConfBadge } from './Badges';
@@ -17,7 +17,7 @@ export default function ExplainModal({ problemId, kind, onClose }) {
   const label = kind === 'risk' ? 'Customer Value at Risk' : 'Customer Value Protected';
 
   return (
-    <Modal open={!!problemId} onClose={onClose} title={label + ' — ' + p.id} width={480} footer={<button className="btn btn-gh" onClick={onClose}>Close</button>}>
+    <SlidePanel open={!!problemId} onClose={onClose} title={label} subtitle={p.id} footer={<button className="btn btn-gh" onClick={onClose}>Close</button>}>
       {!d ? (
         <div className="empty">
           <div className="empty-t">Not enough data yet to explain this number.</div>
@@ -79,7 +79,7 @@ export default function ExplainModal({ problemId, kind, onClose }) {
           </div>
         </>
       )}
-    </Modal>
+    </SlidePanel>
   );
 }
 

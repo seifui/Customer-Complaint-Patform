@@ -9,6 +9,8 @@ import { useStore } from '@/lib/store';
 import { logoutAction } from '@/lib/actions';
 import NavIcon from './NavIcon';
 import Toast from './Toast';
+import ThemeToggle from './ThemeToggle';
+import CaptureConcernDrawer from './CaptureConcernDrawer';
 
 const NOTIFICATIONS = [
   { msg: <>Problem <b>PRB-2044</b> crossed 1,200 linked concerns — priority escalated to Critical</>, meta: '6m ago' },
@@ -24,6 +26,8 @@ export default function AppShell({ session, children }) {
   const concerns = useStore((s) => s.concerns);
   const problems = useStore((s) => s.problems);
   const actions = useStore((s) => s.actions);
+  const captureDrawerOpen = useStore((s) => s.captureDrawerOpen);
+  const closeCaptureDrawer = useStore((s) => s.closeCaptureDrawer);
 
   const queueCount = concerns.length;
   const problemCount = problems.filter((p) => p.status !== 'resolved').length;
@@ -86,6 +90,7 @@ export default function AppShell({ session, children }) {
                 {sub && <p className="page-sub">{sub}</p>}
               </div>
               <div className="page-hd-actions">
+                <ThemeToggle />
                 <div className="tb-ico has-dot" onClick={(e) => { e.stopPropagation(); setNotifOpen((v) => !v); setUserOpen(false); }}>
                   <NavIcon type="bell" />
                   <div className={'notif-drop' + (notifOpen ? ' open' : '')}>
@@ -109,6 +114,10 @@ export default function AppShell({ session, children }) {
       </div>
 
       <Toast />
+
+      {['agent', 'branch', 'manager'].includes(session.role) && (
+        <CaptureConcernDrawer session={session} open={captureDrawerOpen} onClose={closeCaptureDrawer} />
+      )}
     </div>
   );
 }

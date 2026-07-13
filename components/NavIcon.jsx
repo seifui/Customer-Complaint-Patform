@@ -56,6 +56,25 @@ export default function NavIcon({ type }) {
           <path d="M3 5l4 4 4-4" />
         </svg>
       );
+    case 'sun':
+      return (
+        <svg {...common}>
+          <circle cx="7" cy="7" r="2.6" />
+          <path d="M7 .8v1.6M7 11.6v1.6M13.2 7h-1.6M2.4 7H.8M11.3 2.7l-1.1 1.1M3.8 10.2l-1.1 1.1M11.3 11.3l-1.1-1.1M3.8 3.8L2.7 2.7" />
+        </svg>
+      );
+    case 'moon':
+      return (
+        <svg {...common}>
+          <path d="M12 8.6A5.3 5.3 0 015.4 2a5.3 5.3 0 106.6 6.6z" />
+        </svg>
+      );
+    case 'x':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      );
     default:
       return null;
   }

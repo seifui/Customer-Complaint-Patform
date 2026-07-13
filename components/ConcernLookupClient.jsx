@@ -5,17 +5,20 @@ import { useStore } from '@/lib/store';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
 
-export default function MineClient({ session }) {
+// Read-only lookup for Agent/Branch staff answering "what happened to my
+// complaint?" calls. Search spans every concern, not just ones this staff
+// member submitted — but ConcernDetailPanel's own role checks (canAssignDepartment
+// / canActOnDepartment) already stay false for agent/branch, so the detail
+// drawer opened from here has no assign/status/comment actions, automatically.
+export default function ConcernLookupClient({ session }) {
   const concerns = useStore((s) => s.concerns);
-  const openCaptureDrawer = useStore((s) => s.openCaptureDrawer);
   const [openId, setOpenId] = useState(null);
   const [query, setQuery] = useState('');
-  const mine = concerns.filter((c) => c.createdBy === session.role);
 
   const q = query.trim().toLowerCase();
   const filtered = q
-    ? mine.filter((c) => (c.id + ' ' + c.customer + ' ' + c.journey + ' ' + c.summary).toLowerCase().includes(q))
-    : mine;
+    ? concerns.filter((c) => (c.id + ' ' + c.customer + ' ' + (c.nic || '') + ' ' + c.journey + ' ' + c.summary).toLowerCase().includes(q))
+    : concerns;
 
   return (
     <>
@@ -23,11 +26,10 @@ export default function MineClient({ session }) {
         <input
           className="fi"
           style={{ flex: 1 }}
-          placeholder="Search by Tracking ID, Customer Name..."
+          placeholder="Search by Tracking ID, Customer Name, or NIC..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button className="btn btn-p" onClick={openCaptureDrawer}>Raise Concern</button>
       </div>
 
       <div className="card">

@@ -209,7 +209,7 @@ export default function DashboardClient() {
             )}
             <button
               className="btn btn-p"
-              style={{ width: '100%', height: 38, justifyContent: 'center', marginTop: 4 }}
+              style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
               onClick={() => router.push('/problems/' + detailsProblem.id)}
             >
               Open Full Workspace →

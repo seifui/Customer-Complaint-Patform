@@ -3,12 +3,14 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction } from '@/lib/actions';
+import ThemeToggle from './ThemeToggle';
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, null);
 
   return (
     <div className="login-wrap">
+      <ThemeToggle className="login-theme-toggle" />
       <div className="login-card">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="login-logo" />
@@ -26,7 +28,7 @@ export default function LoginForm() {
             <label className="form-lbl">Password</label>
             <input className="form-inp" type="password" name="password" required placeholder="Password" />
           </div>
-          <button className={'btn btn-p' + (pending ? ' btn-loading' : '')} type="submit" disabled={pending} style={{ width: '100%', height: 40, justifyContent: 'center', marginTop: 6 }}>
+          <button className={'btn btn-p btn-hero' + (pending ? ' btn-loading' : '')} type="submit" disabled={pending} style={{ width: '100%', marginTop: 6 }}>
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
