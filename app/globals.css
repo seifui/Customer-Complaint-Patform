@@ -554,7 +554,6 @@ label.attach-btn{display:inline-flex}
 .acct-card-role{font-size:10px;color:var(--tx2);margin-top:2px}
 .login-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:var(--tx3);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
 .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
-.login-hint{font-size:10.5px;color:var(--tx3);margin-top:16px;text-align:center;line-height:1.65}
 
 /* ── details panel sections (Intercom-style) ── */
 .pnl-section{padding:18px 0;border-bottom:1px solid var(--bd)}

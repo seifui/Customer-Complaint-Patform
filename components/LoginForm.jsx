@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import Link from 'next/link';
 import { loginAction } from '@/lib/actions';
 import ThemeToggle from './ThemeToggle';
 
@@ -32,10 +31,6 @@ export default function LoginForm() {
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-
-        <div className="login-hint">
-          <Link href="/complaint" className="tx-link">Are you a customer? Report a concern instead →</Link>
-        </div>
       </div>
     </div>
   );
