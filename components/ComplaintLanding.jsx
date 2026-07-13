@@ -35,7 +35,9 @@ export default function ComplaintLanding() {
       <div className="pub-nav">
         <div className="pub-nav-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="pub-nav-logo" />
+          <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="pub-nav-logo pub-nav-logo-light" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo-full-dark.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="pub-nav-logo pub-nav-logo-dark" />
         </div>
         <div className="pub-nav-right">
           <ThemeToggle />

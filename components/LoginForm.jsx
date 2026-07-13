@@ -12,7 +12,9 @@ export default function LoginForm() {
       <ThemeToggle className="login-theme-toggle" />
       <div className="login-card">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="login-logo" />
+        <img src="/brand/logo-full.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="login-logo login-logo-light" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo-full-dark.png" alt="ConcernHub — Every Concern. One Place. Resolved." className="login-logo login-logo-dark" />
         <div className="login-title">Sign in</div>
         <div className="login-sub">Sign in to your ConcernHub workspace</div>
 
