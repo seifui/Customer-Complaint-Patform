@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { friendlyStatus } from '@/lib/helpers';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function TrackByTicket({ initialQuery = '', autoSearch = false }) {
   const concerns = useStore((s) => s.concerns);
@@ -24,28 +26,30 @@ export default function TrackByTicket({ initialQuery = '', autoSearch = false })
 
   return (
     <div>
-      <form onSubmit={lookup} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-        <input className="form-inp" placeholder="e.g. CH-2026-000128" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <button className="btn btn-p" type="submit" style={{ flexShrink: 0 }}>Check</button>
+      <form onSubmit={lookup} className="mb-1 flex gap-2">
+        <Input placeholder="e.g. CH-2026-000128" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Button type="submit" className="shrink-0">Check</Button>
       </form>
-      <div className="muted" style={{ fontSize: 11, marginBottom: 16 }}>Enter the reference number you received when you reported your concern.</div>
+      <p className="mb-4 text-[11px] text-muted-foreground">Enter the reference number you received when you reported your concern.</p>
 
       {searched && !found && (
-        <div className="callout callout-orange">We couldn&apos;t find a report with that reference number. Double-check it and try again.</div>
+        <div className="rounded-lg border bg-orange-500/10 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-orange-700 dark:text-orange-400">
+          We couldn&apos;t find a report with that reference number. Double-check it and try again.
+        </div>
       )}
 
       {found && (
         <div>
-          <div className="pub-status-row">
-            <div className="pub-status-dot" />
+          <div className="flex items-start gap-3 border-b py-3.5">
+            <div className="mt-1 size-2 shrink-0 rounded-full bg-foreground" />
             <div>
-              <div style={{ fontWeight: 600, fontSize: 12.5 }}>{found.id}</div>
-              <div className="muted" style={{ fontSize: 11 }}>Reported {found.createdAt}</div>
+              <div className="text-[12.5px] font-semibold">{found.id}</div>
+              <div className="text-[11px] text-muted-foreground">Reported {found.createdAt}</div>
             </div>
           </div>
-          <div className="pub-status-row">
-            <div className="pub-status-dot" />
-            <div style={{ fontSize: 12.5, lineHeight: 1.6 }}>{friendlyStatus(found, linkedProblem)}</div>
+          <div className="flex items-start gap-3 py-3.5">
+            <div className="mt-1 size-2 shrink-0 rounded-full bg-foreground" />
+            <div className="text-[12.5px] leading-relaxed">{friendlyStatus(found, linkedProblem)}</div>
           </div>
         </div>
       )}

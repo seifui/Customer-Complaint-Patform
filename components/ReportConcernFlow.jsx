@@ -1,9 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { ArrowUp, Camera, Check, Copy, FileText, Loader2, Mic, Paperclip, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { classify, isValidEmail, isValidSLMobile } from '@/lib/helpers';
-import Select from './Select';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const SERVICE_AREAS = [
   'Money Transfer',
@@ -39,16 +44,37 @@ export default function ReportConcernFlow({ onTrackConcern }) {
   const [contactError, setContactError] = useState('');
   const [accountRef, setAccountRef] = useState('');
   const [area, setArea] = useState(SERVICE_AREAS[0]);
+  const [severity, setSeverity] = useState('medium');
+  const [sentiment, setSentiment] = useState('neutral');
+  const [urgency, setUrgency] = useState('Medium');
+  const [acceptLink, setAcceptLink] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
+  const [copied, setCopied] = useState(false);
   const fileInputScreenshot = useRef(null);
   const fileInputDoc = useRef(null);
+  const fileInputQuick = useRef(null);
+  const textareaRef = useRef(null);
 
   function beginProcessing() {
     if (!desc.trim()) return;
     setStep('processing');
   }
+
+  function handleDescKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      beginProcessing();
+    }
+  }
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 260) + 'px';
+  }, [desc]);
 
   // Runs the (client-side) classification once processing starts, then hands
   // off to the details step — the rotating messages are purely a perceived-
@@ -59,6 +85,10 @@ export default function ReportConcernFlow({ onTrackConcern }) {
     const t = setTimeout(() => {
       setCls(result);
       setArea(result.journey && SERVICE_AREAS.includes(result.journey) ? result.journey : SERVICE_AREAS[0]);
+      setSeverity(result.severity);
+      setSentiment(result.sentiment);
+      setUrgency(result.urgency);
+      setAcceptLink(!!result.target);
       setStep('details');
     }, 1650);
     return () => clearTimeout(t);
@@ -94,8 +124,13 @@ export default function ReportConcernFlow({ onTrackConcern }) {
     setContactError('');
     setAccountRef('');
     setArea(SERVICE_AREAS[0]);
+    setSeverity('medium');
+    setSentiment('neutral');
+    setUrgency('Medium');
+    setAcceptLink(false);
     setAttachments([]);
     setResult(null);
+    setCopied(false);
   }
 
   function submit(e) {
@@ -138,10 +173,9 @@ export default function ReportConcernFlow({ onTrackConcern }) {
     const stamp = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
 
     setTimeout(() => {
-      const target = cls?.target || null;
+      const target = acceptLink && cls?.target ? cls.target : null;
       const contactParts = [emailTrimmed, mobileTrimmed].filter(Boolean).join(' · ');
       const customerLabel = (name.trim() || 'Anonymous') + (contactParts ? ' · ' + contactParts : '') + ' (' + (accountRef.trim() ? 'existing' : 'new') + ')';
-      const severity = cls?.severity || 'medium';
       const journey = area === 'Other' ? cls?.journey || 'Other' : area;
       const concern = {
         id,
@@ -152,10 +186,11 @@ export default function ReportConcernFlow({ onTrackConcern }) {
         lang: cls?.lang || 'English',
         raw: desc.trim(),
         issueType: cls?.issueType || 'General Inquiry / Other',
-        urgency: cls?.urgency || 'Medium',
+        urgency,
         summary: desc.trim().length > 120 ? desc.trim().slice(0, 117) + '…' : desc.trim(),
         severity,
-        sentiment: cls?.sentiment || 'neutral',
+        sentiment,
+        attachments,
         status: target ? 'linked' : 'analyzing',
         linked: target,
         createdAt: stamp,
@@ -180,19 +215,64 @@ export default function ReportConcernFlow({ onTrackConcern }) {
 
   if (step === 'tell') {
     return (
-      <div className="pub-step">
-        <div className="pub-step-title">Report your concern</div>
-        <div className="pub-step-sub">Whether it&apos;s about a transfer, card, account, or any banking service, tell us what happened in your own words.</div>
-        <textarea
-          className="form-inp pub-step1-textarea"
-          autoFocus
-          placeholder="Describe what happened in your own words. Sinhala, Tamil, and English are all supported."
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-        />
-        <button className="btn btn-p pub-step-cta" disabled={!desc.trim()} onClick={beginProcessing}>
-          Continue
-        </button>
+      <div>
+        <div className="rounded-3xl border bg-card px-5.5 py-3.5 shadow-lg transition-shadow focus-within:ring-3 focus-within:ring-ring/40">
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={textareaRef}
+              className="block max-h-65 min-h-9 flex-1 resize-none self-center overflow-y-auto border-none bg-transparent text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+              autoFocus
+              rows={1}
+              placeholder="Describe what happened, in your own words…"
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              onKeyDown={handleDescKeyDown}
+            />
+            <input
+              ref={fileInputQuick}
+              type="file"
+              accept="image/*,.pdf,.doc,.docx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) attachFile(file.type.startsWith('image/') ? 'screenshot' : 'document', file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              onClick={() => fileInputQuick.current?.click()}
+              aria-label="Attach a photo or document"
+              title="Attach a photo or document"
+            >
+              <Paperclip className="size-4" />
+            </button>
+            <Button
+              type="button"
+              size="icon-sm"
+              className="shrink-0 rounded-full"
+              disabled={!desc.trim()}
+              onClick={beginProcessing}
+              aria-label="Submit concern"
+            >
+              <ArrowUp className="size-4" />
+            </Button>
+          </div>
+          {attachments.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {attachments.map((a, i) => (
+                <Badge key={i} variant="secondary" className="gap-1">
+                  {a.type === 'voice' ? <Mic className="size-3" /> : a.type === 'screenshot' ? <Camera className="size-3" /> : <FileText className="size-3" />}
+                  {a.label}
+                  <button type="button" className="ml-0.5 cursor-pointer" onClick={() => removeAttachment(i)} aria-label="Remove attachment">
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -203,37 +283,53 @@ export default function ReportConcernFlow({ onTrackConcern }) {
 
   if (step === 'done' && result) {
     return (
-      <div className="pub-step" style={{ textAlign: 'center' }}>
-        <div className="pub-success-icon">
-          <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2.5 7.2l3 3L11.5 3.8" />
-          </svg>
+      <div className="text-center">
+        <div className="mx-auto mb-5 flex size-13 items-center justify-center rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+          <Check className="size-5.5" />
         </div>
-        <div className="section-title" style={{ fontFamily: 'var(--fs)', fontWeight: 600, fontSize: 20, justifyContent: 'center', marginBottom: 10 }}>
-          Your concern has been submitted successfully
-        </div>
+        <div className="mb-2.5 font-heading text-xl font-medium">Your concern has been submitted successfully</div>
+        <p className="mx-auto mb-7 max-w-[420px] text-[12.5px] leading-relaxed text-muted-foreground">
+          Our team typically reviews new concerns within 1–2 business days.
+        </p>
 
-        <div className="form-lbl" style={{ textAlign: 'center' }}>Tracking Number</div>
-        <div className="pub-confirm-id">{result.id}</div>
-        <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.65, marginBottom: 18 }}>
-          We&apos;ve sent this tracking number to your {result.contactMethod}. Please keep it safe for future reference.
+        <Label className="mb-2 justify-center text-muted-foreground">Tracking Number</Label>
+        <div className="mb-7 flex items-center justify-center gap-3 rounded-xl border bg-muted px-5 py-5">
+          <div className="font-heading text-3xl font-semibold tracking-tight">{result.id}</div>
+          <button
+            type="button"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            onClick={() => {
+              navigator.clipboard?.writeText(result.id);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+            aria-label="Copy tracking number"
+            title="Copy tracking number"
+          >
+            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+          </button>
         </div>
+        <p className="mx-auto mb-7 max-w-[420px] text-[11.5px] leading-relaxed text-muted-foreground">
+          We&apos;ve sent this tracking number to your {result.contactMethod}. Please keep it safe for future reference.
+        </p>
 
         {result.linked ? (
-          <div className="callout callout-acc" style={{ textAlign: 'left' }}>
+          <div className="mx-auto mb-7 max-w-[420px] rounded-lg border bg-muted px-3.5 py-2.5 text-left text-[11.5px] leading-relaxed">
             This matches a pattern we&apos;re already looking into, so it&apos;s been connected straight to the team already working on it.
           </div>
         ) : (
-          <div className="callout callout-blue" style={{ textAlign: 'left' }}>A member of our team will review this and reach out if we need more details.</div>
+          <div className="mx-auto mb-7 max-w-[420px] rounded-lg border bg-muted px-3.5 py-2.5 text-left text-[11.5px] leading-relaxed">
+            A member of our team will review this and reach out if we need more details.
+          </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-          <button className="btn btn-p btn-hero" style={{ flex: 1 }} onClick={() => onTrackConcern(result.id)}>
+        <div className="mx-auto flex max-w-[420px] gap-2">
+          <Button className="flex-1" size="lg" onClick={() => onTrackConcern(result.id)}>
             Track My Concern
-          </button>
-          <button className="btn btn-gh btn-hero" style={{ flex: 1 }} onClick={resetAll}>
+          </Button>
+          <Button className="flex-1" size="lg" variant="outline" onClick={resetAll}>
             Submit Another Concern
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -241,101 +337,111 @@ export default function ReportConcernFlow({ onTrackConcern }) {
 
   // step === 'details'
   return (
-    <div className="pub-step">
-      <div className="pub-step-title" style={{ fontSize: 19 }}>We need a few details to keep in touch</div>
-      <div className="pub-step-sub">
-        Thank you for explaining your concern. To create your tracking number and contact you if we need additional information, please provide the
-        following details.
+    <div>
+      <div className="mb-8">
+        <div className="mb-2 font-heading text-xl font-medium">We need a few details to keep in touch</div>
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          Thank you for explaining your concern. To create your tracking number and contact you if we need additional information, please provide the
+          following details.
+        </p>
       </div>
 
-      <div className="pub-recap">
-        <div className="pub-recap-lbl">Your message</div>
-        <div className="pub-recap-txt">&ldquo;{desc.trim().length > 160 ? desc.trim().slice(0, 157) + '…' : desc.trim()}&rdquo;</div>
+      <div className="mb-9 rounded-lg border bg-muted px-4 py-3.5">
+        <div className="mb-1 text-[10px] font-bold tracking-wide text-muted-foreground uppercase">Your message</div>
+        <div className="text-xs leading-relaxed text-foreground/80 italic">&ldquo;{desc.trim().length > 160 ? desc.trim().slice(0, 157) + '…' : desc.trim()}&rdquo;</div>
       </div>
 
-      <form onSubmit={submit}>
-        <div className="form-row">
-          <label className="form-lbl">Full Name<span className="req">*</span></label>
-          <input
-            className="form-inp"
-            value={name}
-            onChange={(e) => { setName(e.target.value); if (nameError) setNameError(''); }}
-            placeholder="e.g. W.A. Perera"
-          />
-          {nameError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{nameError}</div>}
-        </div>
-        <div className="form-row">
-          <label className="form-lbl">NIC / Passport Number<span className="req">*</span></label>
-          <input
-            className="form-inp"
-            value={nic}
-            onChange={(e) => { setNic(e.target.value); if (nicError) setNicError(''); }}
-            placeholder="e.g. 200012345678 or N1234567"
-          />
-          {nicError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{nicError}</div>}
-        </div>
-        <div className="grid g2" style={{ gap: 10 }}>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label className="form-lbl">Email Address <span className="section-hint">(optional)</span></label>
-            <input
-              className="form-inp"
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(''); if (contactError) setContactError(''); }}
-              placeholder="e.g. john.perera@email.com"
+      <form onSubmit={submit} className="space-y-9">
+        <div className="space-y-5">
+          <div className="text-[11px] font-bold tracking-wide text-muted-foreground uppercase">Contact Details</div>
+          <div>
+            <Label htmlFor="rcf-name" className="mb-1.5">Full Name<span className="text-destructive">*</span></Label>
+            <Input
+              id="rcf-name"
+              value={name}
+              onChange={(e) => { setName(e.target.value); if (nameError) setNameError(''); }}
+              placeholder="e.g. W.A. Perera"
             />
-            {emailError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{emailError}</div>}
+            {nameError && <p className="mt-1.5 text-[11px] text-destructive">{nameError}</p>}
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label className="form-lbl">Mobile Number <span className="section-hint">(optional)</span></label>
-            <input
-              className="form-inp"
-              value={mobile}
-              onChange={(e) => { setMobile(e.target.value); if (mobileError) setMobileError(''); if (contactError) setContactError(''); }}
-              placeholder="e.g. 0771234567"
-              inputMode="tel"
+          <div>
+            <Label htmlFor="rcf-nic" className="mb-1.5">NIC / Passport Number<span className="text-destructive">*</span></Label>
+            <Input
+              id="rcf-nic"
+              value={nic}
+              onChange={(e) => { setNic(e.target.value); if (nicError) setNicError(''); }}
+              placeholder="e.g. 200012345678 or N1234567"
             />
-            {mobileError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{mobileError}</div>}
+            {nicError && <p className="mt-1.5 text-[11px] text-destructive">{nicError}</p>}
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="rcf-email" className="mb-1.5">Email Address <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                id="rcf-email"
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(''); if (contactError) setContactError(''); }}
+                placeholder="e.g. john.perera@email.com"
+              />
+              {emailError && <p className="mt-1.5 text-[11px] text-destructive">{emailError}</p>}
+            </div>
+            <div>
+              <Label htmlFor="rcf-mobile" className="mb-1.5">Mobile Number <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                id="rcf-mobile"
+                value={mobile}
+                onChange={(e) => { setMobile(e.target.value); if (mobileError) setMobileError(''); if (contactError) setContactError(''); }}
+                placeholder="e.g. 0771234567"
+                inputMode="tel"
+              />
+              {mobileError && <p className="mt-1.5 text-[11px] text-destructive">{mobileError}</p>}
+            </div>
+          </div>
+          {contactError && <p className="text-[11.5px] leading-relaxed text-destructive">{contactError}</p>}
         </div>
-        {contactError && <div style={{ color: 'var(--red)', fontSize: 11.5, lineHeight: 1.5, margin: '8px 0 0' }}>{contactError}</div>}
 
-        <div className="form-row" style={{ marginTop: 16 }}>
-          <label className="form-lbl">Category</label>
-          <Select value={area} onChange={setArea} options={SERVICE_AREAS} />
+        <div className="space-y-5">
+          <div>
+            <Label htmlFor="rcf-account" className="mb-1.5">Account / Card Number <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input id="rcf-account" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} placeholder="Helps us find your account faster" />
+          </div>
         </div>
-        <div className="form-row">
-          <label className="form-lbl">Account / Card Number <span className="section-hint">(optional)</span></label>
-          <input className="form-inp" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} placeholder="Helps us find your account faster" />
-        </div>
-        <div className="form-row">
-          <label className="form-lbl">Attachments <span className="section-hint">(optional)</span></label>
-          <div className="attach-row">
-            <button type="button" className="attach-btn" onClick={toggleVoiceNote}>🎙 Record Voice Note</button>
-            <label className="attach-btn">
-              📷 Upload Screenshot
-              <input ref={fileInputScreenshot} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => attachFile('screenshot', e.target.files[0])} />
+
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold tracking-wide text-muted-foreground uppercase">Attachments <span className="normal-case font-normal text-muted-foreground/70">(optional)</span></div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={toggleVoiceNote}>
+              <Mic className="size-3.5" /> Record Voice Note
+            </Button>
+            <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'cursor-pointer')}>
+              <Camera className="size-3.5" /> Upload Screenshot
+              <input ref={fileInputScreenshot} type="file" accept="image/*" className="hidden" onChange={(e) => attachFile('screenshot', e.target.files[0])} />
             </label>
-            <label className="attach-btn">
-              📄 Upload Document
-              <input ref={fileInputDoc} type="file" style={{ display: 'none' }} onChange={(e) => attachFile('document', e.target.files[0])} />
+            <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'cursor-pointer')}>
+              <FileText className="size-3.5" /> Upload Document
+              <input ref={fileInputDoc} type="file" className="hidden" onChange={(e) => attachFile('document', e.target.files[0])} />
             </label>
           </div>
           {attachments.length > 0 && (
-            <div className="pill-list" style={{ marginTop: 8 }}>
+            <div className="flex flex-wrap gap-1.5">
               {attachments.map((a, i) => (
-                <span className="pill" key={i}>
-                  {a.type === 'voice' ? '🎙' : a.type === 'screenshot' ? '📷' : '📄'} {a.label}{' '}
-                  <span className="tx-link" style={{ marginLeft: 4 }} onClick={() => removeAttachment(i)}>✕</span>
-                </span>
+                <Badge key={i} variant="secondary" className="gap-1">
+                  {a.type === 'voice' ? <Mic className="size-3" /> : a.type === 'screenshot' ? <Camera className="size-3" /> : <FileText className="size-3" />}
+                  {a.label}
+                  <button type="button" className="ml-0.5 cursor-pointer" onClick={() => removeAttachment(i)} aria-label="Remove attachment">
+                    <X className="size-3" />
+                  </button>
+                </Badge>
               ))}
             </div>
           )}
         </div>
 
-        <button className={'btn btn-p btn-hero' + (submitting ? ' btn-loading' : '')} type="submit" disabled={submitting} style={{ width: '100%', marginTop: 4 }}>
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting && <Loader2 className="size-4 animate-spin" />}
           {submitting ? 'Submitting…' : 'Submit'}
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -348,9 +454,9 @@ function ProcessingState() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="pub-processing">
-      <div className="pub-processing-spinner" />
-      <div className="pub-processing-msg">{PROCESSING_MESSAGES[i]}</div>
+    <div className="flex flex-col items-center justify-center gap-4.5 px-5 py-16 text-center">
+      <Loader2 className={cn('size-7 animate-spin text-foreground')} />
+      <div className="font-heading text-sm font-medium text-foreground/80">{PROCESSING_MESSAGES[i]}</div>
     </div>
   );
 }

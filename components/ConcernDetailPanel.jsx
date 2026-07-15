@@ -2,14 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Camera, FileText, Mic } from 'lucide-react';
 import SlidePanel from './SlidePanel';
 import Callout from './Callout';
 import AiStepper from './AiStepper';
 import Select from './Select';
-import { ChBadge, SevBadge, SntBadge, TriageBadge } from './Badges';
+import { ChBadge, SevBadge, SntBadge, TriageBadge, WfBadge } from './Badges';
 import { useStore } from '@/lib/store';
-import { triageInfo, getTimeline, workflowStatusOf, workflowStatusLabel, workflowStatusBadgeClass, MANUAL_STATUS_OPTIONS } from '@/lib/helpers';
+import { triageInfo, getTimeline, workflowStatusOf, workflowStatusLabel, MANUAL_STATUS_OPTIONS } from '@/lib/helpers';
 import { DEPARTMENTS, DEPARTMENT_MEMBERS } from '@/lib/data';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function ConcernDetailPanel({ concernId, onClose, session }) {
   const router = useRouter();
@@ -37,9 +43,9 @@ export default function ConcernDetailPanel({ concernId, onClose, session }) {
 
 function Row({ label, value }) {
   return (
-    <div className="pnl-row">
-      <span className="pnl-row-lbl">{label}</span>
-      <span className="pnl-row-val">{value}</span>
+    <div className="flex items-start justify-between gap-3.5 py-1 text-xs">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium">{value}</span>
     </div>
   );
 }
@@ -130,121 +136,129 @@ function ConcernDetailBody({ c, session, tri, linkedProblem, goToProblem }) {
 
   return (
     <>
-      <div className="pnl-section" style={{ paddingTop: 0 }}>
-        <div className="pill-list">
+      <div className="border-b py-4.5 first:pt-0">
+        <div className="flex flex-wrap gap-1.5">
           <TriageBadge tri={tri} />
           <ChBadge c={c.channel} />
           <SevBadge s={c.severity} />
           <SntBadge s={c.sentiment} />
-          <span className={'badge ' + workflowStatusBadgeClass(workflowStatusOf(c))}>{workflowStatusLabel(workflowStatusOf(c))}</span>
+          <WfBadge s={workflowStatusOf(c)} />
         </div>
       </div>
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">Customer Details</div>
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Customer Details</div>
         <Row label="Customer" value={c.customer} />
         {c.nic && <Row label="NIC / Passport" value={c.nic} />}
       </div>
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">Concern Details</div>
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Concern Details</div>
         <Row label="Journey" value={c.journey} />
         <Row label="Language" value={c.lang} />
         {c.issueType && <Row label="Issue Type" value={c.issueType} />}
         {c.urgency && <Row label="Urgency" value={c.urgency} />}
-        <Row label="Created" value={<span className="mono">{c.createdAt}</span>} />
+        <Row label="Created" value={<span className="font-mono">{c.createdAt}</span>} />
         <Row label="AI-Suggested Team" value={c.assignee} />
+        {c.attachments?.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {c.attachments.map((a, i) => (
+              <Badge key={i} variant="secondary" className="gap-1">
+                {a.type === 'voice' ? <Mic className="size-3" /> : a.type === 'screenshot' ? <Camera className="size-3" /> : <FileText className="size-3" />}
+                {a.label}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">Assignment</div>
-        <Row label="Department" value={c.assignedDepartment || <span className="muted">Not yet assigned</span>} />
-        <Row label="Team Member" value={c.assignedTo || <span className="muted">Not yet assigned</span>} />
-        <Row label="External Ticket" value={c.externalRef || <span className="muted">Not linked</span>} />
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Assignment</div>
+        <Row label="Department" value={c.assignedDepartment || <span className="text-muted-foreground">Not yet assigned</span>} />
+        <Row label="Team Member" value={c.assignedTo || <span className="text-muted-foreground">Not yet assigned</span>} />
+        <Row label="External Ticket" value={c.externalRef || <span className="text-muted-foreground">Not linked</span>} />
 
         {canAssignDepartment && (
-          <div style={{ marginTop: 12 }}>
-            <label className="form-lbl">{c.assignedDepartment ? 'Reassign Department' : 'Assign to Department'}</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1 }}>
+          <div className="mt-3">
+            <Label className="mb-1.5">{c.assignedDepartment ? 'Reassign Department' : 'Assign to Department'}</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Select value={deptPick} onChange={setDeptPick} options={DEPARTMENTS} placeholder="Choose a department…" />
               </div>
-              <button className="btn btn-p" onClick={saveDepartment} disabled={!deptPick || deptPick === c.assignedDepartment}>Assign</button>
+              <Button onClick={saveDepartment} disabled={!deptPick || deptPick === c.assignedDepartment}>Assign</Button>
             </div>
           </div>
         )}
 
         {canActOnDepartment && (
-          <div style={{ marginTop: 12 }}>
-            <label className="form-lbl">Assign to Team Member</label>
+          <div className="mt-3">
+            <Label className="mb-1.5">Assign to Team Member</Label>
             {roster.length === 0 ? (
-              <div className="muted" style={{ fontSize: 11.5 }}>No team members configured for this department yet.</div>
+              <div className="text-[11.5px] text-muted-foreground">No team members configured for this department yet.</div>
             ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1 }}>
+              <div className="flex gap-2">
+                <div className="flex-1">
                   <Select value={memberPick} onChange={setMemberPick} options={roster} placeholder="Choose a team member…" />
                 </div>
-                <button className="btn btn-p" onClick={saveMember} disabled={!memberPick || memberPick === c.assignedTo}>Assign</button>
+                <Button onClick={saveMember} disabled={!memberPick || memberPick === c.assignedTo}>Assign</Button>
               </div>
             )}
           </div>
         )}
 
         {canActOnDepartment && (
-          <div style={{ marginTop: 12 }}>
-            <label className="form-lbl">{c.externalRef ? 'Update External Ticket' : 'Link External Ticket'}</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                className="form-inp"
-                style={{ flex: 1 }}
+          <div className="mt-3">
+            <Label className="mb-1.5">{c.externalRef ? 'Update External Ticket' : 'Link External Ticket'}</Label>
+            <div className="flex gap-2">
+              <Input
+                className="flex-1"
                 placeholder="e.g. JIRA-DEV-245 or vendor ticket ID"
                 value={refPick}
                 onChange={(e) => setRefPick(e.target.value)}
               />
-              <button className="btn btn-p" onClick={saveRef} disabled={!refPick.trim() || refPick.trim() === c.externalRef}>Save</button>
+              <Button onClick={saveRef} disabled={!refPick.trim() || refPick.trim() === c.externalRef}>Save</Button>
             </div>
           </div>
         )}
       </div>
 
       {isClosed && (
-        <div className="pnl-section">
-          <div className="pnl-section-hd">Resolution</div>
-          <Callout kind="acc" style={{ marginBottom: 8 }}>{c.closureMessage}</Callout>
-          <div className="muted" style={{ fontSize: 10.5 }}>
+        <div className="border-b py-4.5">
+          <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Resolution</div>
+          <Callout kind="acc">{c.closureMessage}</Callout>
+          <div className="text-[10.5px] text-muted-foreground">
             Closed — {c.closureReason === 'deployed' ? 'Fixed, Deployed to Production' : 'Other Reason'} · {c.closedAt}
           </div>
         </div>
       )}
 
       {canCloseConcern && (
-        <div className="pnl-section">
-          <div className="pnl-section-hd">Close Concern</div>
-          <div className="form-row">
-            <label className="form-lbl">Reason</label>
+        <div className="border-b py-4.5">
+          <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Close Concern</div>
+          <div className="mb-4">
+            <Label className="mb-1.5">Reason</Label>
             <Select value={closeReason} onChange={pickCloseReason} options={CLOSE_REASONS} />
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label className="form-lbl">Message to Customer</label>
-            <textarea
-              className="form-inp"
-              style={{ minHeight: 70 }}
+          <div>
+            <Label className="mb-1.5">Message to Customer</Label>
+            <Textarea
+              className="min-h-17.5"
               placeholder="Explain what happened, in a friendly tone the customer will read…"
               value={closeMessage}
               onChange={(e) => setCloseMessage(e.target.value)}
             />
-            <button className="btn btn-p" style={{ marginTop: 8 }} onClick={saveClose} disabled={!closeMessage.trim()}>Close Concern</button>
+            <Button className="mt-2" onClick={saveClose} disabled={!closeMessage.trim()}>Close Concern</Button>
           </div>
         </div>
       )}
 
       {canActOnDepartment && (
-        <div className="pnl-section">
-          <div className="pnl-section-hd">Update</div>
-          <div className="form-row" style={{ marginBottom: 14 }}>
-            <label className="form-lbl">Update Status</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1 }}>
+        <div className="border-b py-4.5">
+          <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Update</div>
+          <div className="mb-3.5">
+            <Label className="mb-1.5">Update Status</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Select
                   value={statusPick}
                   onChange={setStatusPick}
@@ -252,38 +266,37 @@ function ConcernDetailBody({ c, session, tri, linkedProblem, goToProblem }) {
                   placeholder="Choose a status…"
                 />
               </div>
-              <button className="btn btn-p" onClick={saveStatus} disabled={!statusPick}>Update</button>
+              <Button onClick={saveStatus} disabled={!statusPick}>Update</Button>
             </div>
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label className="form-lbl">Add Comment</label>
-            <textarea
-              className="form-inp"
-              style={{ minHeight: 60 }}
+          <div>
+            <Label className="mb-1.5">Add Comment</Label>
+            <Textarea
+              className="min-h-15"
               placeholder="Add a note for this concern…"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
-            <button className="btn btn-gh" style={{ marginTop: 8 }} onClick={saveComment} disabled={!comment.trim()}>Add Comment</button>
+            <Button variant="outline" className="mt-2" onClick={saveComment} disabled={!comment.trim()}>Add Comment</Button>
           </div>
         </div>
       )}
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">AI Understanding</div>
-        <div style={{ fontSize: 10.5, color: 'var(--tx2)', marginBottom: 5, fontWeight: 600 }}>Raw Signal</div>
-        <Callout kind="blue" style={{ marginBottom: 12, fontSize: 11.5 }}>{c.raw}</Callout>
-        <div style={{ fontSize: 10.5, color: 'var(--tx2)', marginBottom: 5, fontWeight: 600 }}>AI Summary</div>
-        <div style={{ fontSize: 12, color: 'var(--tx1)', lineHeight: 1.5 }}>{c.summary}</div>
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">AI Understanding</div>
+        <div className="mb-1.5 text-[10.5px] font-semibold text-muted-foreground">Raw Signal</div>
+        <Callout kind="blue" className="text-[11.5px]">{c.raw}</Callout>
+        <div className="mb-1.5 text-[10.5px] font-semibold text-muted-foreground">AI Summary</div>
+        <div className="text-xs leading-relaxed text-foreground/80">{c.summary}</div>
       </div>
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">Why This Was Flagged</div>
-        <Callout kind="blue" style={{ marginBottom: 0, fontSize: 11.5 }}>{tri.note}</Callout>
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Why This Was Flagged</div>
+        <Callout kind="blue" className="mb-0 text-[11.5px]">{tri.note}</Callout>
       </div>
 
-      <div className="pnl-section">
-        <div className="pnl-section-hd">Processing Pipeline</div>
+      <div className="border-b py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Processing Pipeline</div>
         <AiStepper
           steps={[
             { label: 'Ingest', desc: 'Signal received and timestamped', state: 'done' },
@@ -298,26 +311,26 @@ function ConcernDetailBody({ c, session, tri, linkedProblem, goToProblem }) {
           ]}
         />
         {c.linked ? (
-          <Callout kind="acc" style={{ marginBottom: 0, fontSize: 11.5, marginTop: 6 }}>
+          <Callout kind="acc" className="mt-1.5 mb-0 text-[11.5px]">
             Connected to{' '}
-            <b className="tx-link" onClick={goToProblem}>
+            <b className="cursor-pointer text-primary underline underline-offset-2" onClick={goToProblem}>
               {linkedProblem.id} — {linkedProblem.title}
             </b>
           </Callout>
         ) : (
-          <Callout kind="orange" style={{ marginBottom: 0, fontSize: 11.5, marginTop: 6 }}>Not yet linked to a known problem pattern.</Callout>
+          <Callout kind="orange" className="mt-1.5 mb-0 text-[11.5px]">Not yet linked to a known problem pattern.</Callout>
         )}
       </div>
 
-      <div className="pnl-section" style={{ marginBottom: 0 }}>
-        <div className="pnl-section-hd">Activity Timeline</div>
+      <div className="py-4.5">
+        <div className="mb-3 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Activity Timeline</div>
         {getTimeline(c).map((ev, i) => (
-          <div className="pub-status-row" key={i}>
-            <div className="pub-status-dot" />
+          <div className="flex items-start gap-2.5 border-b py-3.5 last:border-b-0" key={i}>
+            <div className="mt-1 size-2 shrink-0 rounded-full bg-foreground" />
             <div>
-              <div style={{ fontWeight: 600, fontSize: 12 }}>{ev.label}</div>
-              {ev.detail && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{ev.detail}</div>}
-              <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>
+              <div className="text-xs font-semibold">{ev.label}</div>
+              {ev.detail && <div className="mt-0.5 text-[11px] text-muted-foreground">{ev.detail}</div>}
+              <div className="mt-0.5 text-[10.5px] text-muted-foreground">
                 {ev.by}
                 {ev.byRole ? ' · ' + ev.byRole : ''} · {ev.at}
               </div>

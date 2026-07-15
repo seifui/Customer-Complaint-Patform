@@ -7,8 +7,13 @@ import { CHANNEL_ICON } from '@/lib/data';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
 import Select from './Select';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const TRIAGE_ORDER = Object.keys(TRIAGE_DEFS).sort((a, b) => TRIAGE_DEFS[a].order - TRIAGE_DEFS[b].order);
+const ALL = '__all__';
 
 export default function QueueClient({ session }) {
   const concerns = useStore((s) => s.concerns);
@@ -34,49 +39,52 @@ export default function QueueClient({ session }) {
 
   return (
     <>
-      <div className="triage-chip-row">
+      <div className="mb-4 flex flex-wrap gap-2">
         {TRIAGE_ORDER.map((cat) => {
           const def = TRIAGE_DEFS[cat];
           const active = filters.triage === cat;
           return (
-            <div
+            <button
               key={cat}
-              className={'triage-chip' + (active ? ' active' : '')}
+              type="button"
+              className={cn(
+                'cursor-pointer rounded-full px-3.5 py-1.5 text-[10.5px] font-semibold transition-opacity hover:opacity-85',
+                active && 'ring-1 ring-current'
+              )}
               style={{ background: def.bg, color: def.color }}
               onClick={() => setFilters((f) => ({ ...f, triage: f.triage === cat ? '' : cat }))}
             >
-              {def.label} <span className="mono">{counts[cat]}</span>
-            </div>
+              {def.label} <span className="font-mono">{counts[cat]}</span>
+            </button>
           );
         })}
       </div>
 
-      <div className="fb">
-        <input
-          className="fi"
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Input
           placeholder="Search ID, customer, summary…"
-          style={{ width: 220 }}
+          className="w-55"
           value={filters.q}
           onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
         />
         <Select
           variant="pill"
-          value={filters.channel}
-          onChange={(v) => setFilters((f) => ({ ...f, channel: v }))}
-          options={[{ value: '', label: 'All Channels' }, ...Object.keys(CHANNEL_ICON)]}
+          value={filters.channel || ALL}
+          onChange={(v) => setFilters((f) => ({ ...f, channel: v === ALL ? '' : v }))}
+          options={[{ value: ALL, label: 'All Channels' }, ...Object.keys(CHANNEL_ICON)]}
         />
         <Select
           variant="pill"
-          value={filters.severity}
-          onChange={(v) => setFilters((f) => ({ ...f, severity: v }))}
-          options={[{ value: '', label: 'All Severities' }, 'critical', 'high', 'medium', 'low']}
+          value={filters.severity || ALL}
+          onChange={(v) => setFilters((f) => ({ ...f, severity: v === ALL ? '' : v }))}
+          options={[{ value: ALL, label: 'All Severities' }, 'critical', 'high', 'medium', 'low']}
         />
-        <button className="btn btn-gh" onClick={() => setFilters({ channel: '', severity: '', triage: '', q: '' })}>Reset</button>
+        <Button variant="outline" onClick={() => setFilters({ channel: '', severity: '', triage: '', q: '' })}>Reset</Button>
       </div>
 
-      <div className="card">
+      <Card className="py-0">
         <QueueTable list={filtered} onOpen={setOpenId} />
-      </div>
+      </Card>
 
       <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} session={session} />
     </>

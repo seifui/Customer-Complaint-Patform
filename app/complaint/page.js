@@ -1,7 +1,7 @@
 import ComplaintLanding from '@/components/ComplaintLanding';
 
 export const metadata = {
-  title: 'Report a Concern · ConcernHub',
+  title: 'Report a Concern · Concerns AI',
 };
 
 export default function ComplaintPage() {

@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function MineClient({ session }) {
   const concerns = useStore((s) => s.concerns);
@@ -19,21 +22,20 @@ export default function MineClient({ session }) {
 
   return (
     <>
-      <div className="fb">
-        <input
-          className="fi"
-          style={{ flex: 1 }}
+      <div className="mb-4 flex items-center gap-2">
+        <Input
+          className="flex-1"
           placeholder="Search by Tracking ID, Customer Name..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button className="btn btn-p" onClick={openCaptureDrawer}>Raise Concern</button>
+        <Button onClick={openCaptureDrawer}>Raise Concern</Button>
       </div>
 
-      <div className="card">
-        <div className="section-hint" style={{ display: 'block', marginBottom: 14 }}>Showing {filtered.length} Concerns</div>
+      <Card className="gap-0 py-0">
+        <div className="border-b px-4 py-3 text-[11px] text-muted-foreground">Showing {filtered.length} Concerns</div>
         <QueueTable list={filtered} onOpen={setOpenId} />
-      </div>
+      </Card>
       <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} session={session} />
     </>
   );

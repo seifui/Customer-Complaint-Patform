@@ -3,26 +3,24 @@
 import { useState } from 'react';
 import TrackByTicket from './TrackByTicket';
 import FindMyConcerns from './FindMyConcerns';
-
-const SUB_TABS = [
-  { key: 'ticket', label: 'Search by Ticket' },
-  { key: 'nic', label: 'Search by NIC / Passport' },
-];
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function TrackMyConcerns({ initialTicket }) {
   const [subTab, setSubTab] = useState('ticket');
 
   return (
-    <div>
-      <div className="pub-subtabs">
-        {SUB_TABS.map((t) => (
-          <div key={t.key} className={'pub-subtab-opt' + (subTab === t.key ? ' on' : '')} onClick={() => setSubTab(t.key)}>
-            {t.label}
-          </div>
-        ))}
-      </div>
-      {subTab === 'ticket' && <TrackByTicket initialQuery={initialTicket || ''} autoSearch={!!initialTicket} />}
-      {subTab === 'nic' && <FindMyConcerns />}
-    </div>
+    <Card>
+      <CardContent>
+        <Tabs value={subTab} onValueChange={setSubTab} className="mb-5 gap-0">
+          <TabsList variant="line" className="h-auto w-full justify-start gap-5 border-b p-0">
+            <TabsTrigger value="ticket" className="h-auto flex-none px-0 pb-2.5">Search by Ticket</TabsTrigger>
+            <TabsTrigger value="nic" className="h-auto flex-none px-0 pb-2.5">Search by NIC / Passport</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {subTab === 'ticket' && <TrackByTicket initialQuery={initialTicket || ''} autoSearch={!!initialTicket} />}
+        {subTab === 'nic' && <FindMyConcerns />}
+      </CardContent>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronDown, ShieldAlert, TrendingDown, TrendingUp, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { money, num } from '@/lib/helpers';
 import { SevBadge, StatusBadge } from './Badges';
@@ -10,12 +11,25 @@ import ExplainModal from './ExplainModal';
 import OverflowMenu from './OverflowMenu';
 import SlidePanel from './SlidePanel';
 import Callout from './Callout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 function execResultText(p) {
   if (!p.impact.after) return 'No intervention started yet — awaiting owner and deadline.';
   const repPct = Math.round((1 - p.impact.after.repeat / p.impact.before.repeat) * 100);
   return 'Repeat contacts down ' + repPct + '% since intervention began (' + p.startedAt + ').';
 }
+
+const KPIS = [
+  { key: 'risk', label: 'Value at Risk', icon: ShieldAlert, tone: 'bg-red-500/10 text-red-600 dark:text-red-400', sub: 'Across open problems' },
+  { key: 'disengagement', label: 'Disengagement Signals', icon: TrendingDown, tone: 'bg-orange-500/10 text-orange-600 dark:text-orange-400', sub: 'Customers pulling back' },
+  { key: 'growing', label: 'Rapidly Growing', icon: TrendingUp, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', sub: 'Problems trending ↑50%+' },
+  { key: 'protected', label: 'Value Protected', icon: ShieldCheck, tone: 'bg-primary/10 text-primary', sub: 'This month', up: true },
+  { key: 'improving', label: 'Improving', icon: CheckCircle2, tone: 'bg-green-500/10 text-green-600 dark:text-green-400', sub: 'After intervention', up: true },
+];
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -35,63 +49,76 @@ export default function DashboardClient() {
   const allSorted = [...problems].sort((a, b) => (b.severity === 'critical') - (a.severity === 'critical') || b.concernCount - a.concernCount);
   const detailsProblem = detailsId ? problems.find((p) => p.id === detailsId) : null;
 
+  const kpiValues = {
+    risk: money(valueAtRiskTotal),
+    disengagement: num(disengagementTotal),
+    growing: rapidlyGrowing,
+    protected: money(valueProtected),
+    improving,
+  };
+
   return (
     <>
-      <div className="dash-block">
-        <div className={'attn-card' + (attnOpen ? ' open' : '')} onClick={() => setAttnOpen((v) => !v)}>
-          <div className="attn-card-icon">⚠</div>
-          <div className="attn-card-body">
-            <div className="attn-card-count">{execProblems.length} Problems Need Your Attention</div>
-            <div className="attn-card-sub">Each is awaiting an executive decision — click to see the list</div>
+      <div className="mb-6">
+        <Card
+          className="cursor-pointer flex-row items-center gap-4 px-5.5 transition-all hover:shadow-sm"
+          onClick={() => setAttnOpen((v) => !v)}
+        >
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+            <ShieldAlert className="size-5" />
           </div>
-          <div className="attn-card-breakdown">
-            {bySeverity.critical > 0 && <span className="badge sev-critical">{bySeverity.critical} Critical</span>}
-            {bySeverity.high > 0 && <span className="badge sev-high">{bySeverity.high} High</span>}
+          <div className="min-w-0 flex-1">
+            <div className="text-[19px] font-bold tracking-tight">{execProblems.length} Problems Need Your Attention</div>
+            <div className="mt-1 text-[11.5px] text-muted-foreground">Each is awaiting an executive decision — click to see the list</div>
           </div>
-          <div className={'attn-card-cta' + (attnOpen ? ' open' : '')}>
+          <div className="flex shrink-0 gap-1.5">
+            {bySeverity.critical > 0 && <Badge variant="outline" className="border-transparent bg-red-500/10 text-red-600 dark:text-red-400">{bySeverity.critical} Critical</Badge>}
+            {bySeverity.high > 0 && <Badge variant="outline" className="border-transparent bg-orange-500/10 text-orange-600 dark:text-orange-400">{bySeverity.high} High</Badge>}
+          </div>
+          <div className="flex shrink-0 items-center gap-1 text-[11.5px] font-semibold">
             {attnOpen ? 'Hide' : 'View'}
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 3.2l4 4 4-4" /></svg>
+            <ChevronDown className={cn('size-3.5 transition-transform', attnOpen && 'rotate-180')} />
           </div>
-        </div>
+        </Card>
 
         {attnOpen && (
-          <div className="attn-list">
+          <div className="mt-3 space-y-2.5">
             {execProblems.map((p) => (
-              <div className="pcard" key={p.id}>
-                <div className="pcard-hd">
+              <Card key={p.id} className="px-4.5">
+                <div className="mb-3.5 flex items-start justify-between gap-2.5">
                   <div>
-                    <div className="pcard-title">{p.title}</div>
-                    <div className="pcard-id">{p.id}</div>
+                    <div className="mb-0.5 text-[13.5px] font-bold tracking-tight">{p.title}</div>
+                    <div className="font-mono text-[10px] text-muted-foreground">{p.id}</div>
                   </div>
-                  <div className="pcard-badges">
+                  <div className="flex shrink-0 gap-1.5">
                     <SevBadge s={p.severity} />
                     <StatusBadge s={p.status} />
                   </div>
                 </div>
-                <div className="pcard-stats">
+                <div className="mb-3.5 grid grid-cols-4 gap-2">
                   <div>
-                    <div className="pcard-stat-l">Affected</div>
-                    <div className="pcard-stat-v">{num(p.affectedCustomers)}</div>
+                    <div className="mb-1 text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">Affected</div>
+                    <div className="text-[13px] font-semibold tracking-tight">{num(p.affectedCustomers)}</div>
                   </div>
                   <div>
-                    <div className="pcard-stat-l">Value at Risk</div>
-                    <div className="pcard-stat-v">{money(p.valueAtRisk)}</div>
+                    <div className="mb-1 text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">Value at Risk</div>
+                    <div className="text-[13px] font-semibold tracking-tight">{money(p.valueAtRisk)}</div>
                   </div>
                   <div>
-                    <div className="pcard-stat-l">Trend</div>
-                    <div className="pcard-stat-v" style={{ color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>
+                    <div className="mb-1 text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">Trend</div>
+                    <div className={cn('text-[13px] font-semibold tracking-tight', p.trendPct >= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
                       {p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%
                     </div>
                   </div>
                   <div>
-                    <div className="pcard-stat-l">Owner</div>
-                    <div className="pcard-stat-v" style={{ fontSize: 12 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</div>
+                    <div className="mb-1 text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">Owner</div>
+                    <div className="text-xs font-semibold">{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</div>
                   </div>
                 </div>
-                <div className="pcard-ft">
-                  <span className="muted" style={{ fontSize: 10.5 }}>Last updated {p.startedAt !== '—' ? p.startedAt : 'not yet started'}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <button className="btn btn-p btn-sm" onClick={() => router.push('/problems/' + p.id)}>Open Workspace</button>
+                <div className="flex items-center justify-between gap-2 border-t pt-3.5">
+                  <span className="text-[10.5px] text-muted-foreground">Last updated {p.startedAt !== '—' ? p.startedAt : 'not yet started'}</span>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" onClick={() => router.push('/problems/' + p.id)}>Open Workspace</Button>
                     <OverflowMenu
                       items={[
                         { label: 'View Details', onClick: () => setDetailsId(p.id) },
@@ -100,120 +127,103 @@ export default function DashboardClient() {
                     />
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
-      <div className="dash-block">
-        <div className="section-title" style={{ fontSize: 13, color: 'var(--tx2)' }}>Executive Metrics</div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', gap: 12 }}>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--red-d)', color: 'var(--red)' }}>⚠</span>Value at Risk</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{money(valueAtRiskTotal)}</div>
-            <div className="kpi-s">Across open problems</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--orange-d)', color: 'var(--orange)' }}>📉</span>Disengagement Signals</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{num(disengagementTotal)}</div>
-            <div className="kpi-s">Customers pulling back</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--purple-d)', color: 'var(--purple)' }}>📈</span>Rapidly Growing</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{rapidlyGrowing}</div>
-            <div className="kpi-s">Problems trending ↑50%+</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--acc-d)', color: 'var(--acc)' }}>🛡</span>Value Protected</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{money(valueProtected)}</div>
-            <div className="kpi-s up">This month</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--green-d)', color: 'var(--green)' }}>✓</span>Improving</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{improving}</div>
-            <div className="kpi-s up">After intervention</div>
-          </div>
+      <div className="mb-6">
+        <div className="mb-3.5 text-[13px] font-semibold text-muted-foreground">Executive Metrics</div>
+        <div className="grid grid-cols-5 gap-3">
+          {KPIS.map((k) => (
+            <Card key={k.key} className="px-5">
+              <div className="mb-2.5 flex items-center gap-1.5 text-[10.5px] tracking-wide text-muted-foreground uppercase">
+                <span className={cn('flex size-6.5 items-center justify-center rounded-full', k.tone)}>
+                  <k.icon className="size-3.5" />
+                </span>
+                {k.label}
+              </div>
+              <div className="text-[20px] font-bold tracking-tight">{kpiValues[k.key]}</div>
+              <div className={cn('mt-1.5 text-[11px] text-muted-foreground', k.up && 'text-green-600 dark:text-green-400')}>{k.sub}</div>
+            </Card>
+          ))}
         </div>
       </div>
 
-      <div className="dash-block">
-        <div className="section-title" style={{ fontSize: 13, color: 'var(--tx2)' }}>
-          All Emerging Problems <span className="section-hint">click a row to open the Problem Workspace</span>
+      <div className="mb-6">
+        <div className="mb-3.5 text-[13px] font-semibold text-muted-foreground">
+          All Emerging Problems <span className="ml-1 text-[11px] font-normal">click a row to open the Problem Workspace</span>
         </div>
-        <div className="card">
-          <div className="tbl-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Problem</th>
-                  <th>Severity</th>
-                  <th>Status</th>
-                  <th>Trend</th>
-                  <th>Affected</th>
-                  <th>Value at Risk</th>
-                  <th>Owner</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allSorted.map((p) => (
-                  <tr key={p.id} onClick={() => router.push('/problems/' + p.id)}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{p.title}</div>
-                      <div className="muted mono" style={{ fontSize: 10 }}>{p.id}</div>
-                    </td>
-                    <td><SevBadge s={p.severity} /></td>
-                    <td><StatusBadge s={p.status} /></td>
-                    <td style={{ color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>{p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%</td>
-                    <td className="mono">{num(p.affectedCustomers)}</td>
-                    <td className="mono">{money(p.valueAtRisk)}</td>
-                    <td className="muted" style={{ fontSize: 11 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Card className="py-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Problem</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Trend</TableHead>
+                <TableHead>Affected</TableHead>
+                <TableHead>Value at Risk</TableHead>
+                <TableHead>Owner</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allSorted.map((p) => (
+                <TableRow key={p.id} className="cursor-pointer" onClick={() => router.push('/problems/' + p.id)}>
+                  <TableCell className="whitespace-normal">
+                    <div className="font-semibold">{p.title}</div>
+                    <div className="font-mono text-[10px] text-muted-foreground">{p.id}</div>
+                  </TableCell>
+                  <TableCell><SevBadge s={p.severity} /></TableCell>
+                  <TableCell><StatusBadge s={p.status} /></TableCell>
+                  <TableCell className={p.trendPct >= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}>
+                    {p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%
+                  </TableCell>
+                  <TableCell className="font-mono">{num(p.affectedCustomers)}</TableCell>
+                  <TableCell className="font-mono">{money(p.valueAtRisk)}</TableCell>
+                  <TableCell className="text-[11px] text-muted-foreground">{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
-      <div className="dash-block">
-        <div className="card" style={{ background: 'linear-gradient(135deg,var(--acc-d2),transparent)' }}>
-          <div className="section-title">The Continuous Learning Loop</div>
+      <div className="mb-6">
+        <Card className="bg-gradient-to-br from-primary/5 to-transparent px-5.5">
+          <div className="mb-1 font-heading text-sm font-semibold">The Continuous Learning Loop</div>
           <FlowStrip steps={['More Data', 'Smarter AI', 'Better Actions', 'Better Outcomes']} />
-          <div className="muted" style={{ fontSize: 11.5 }}>
+          <div className="text-[11.5px] text-muted-foreground">
             We do not help the bank close more complaints. We help it identify and fix the customer problems that keep happening again and again.
           </div>
-        </div>
+        </Card>
       </div>
 
       <SlidePanel open={!!detailsProblem} onClose={() => setDetailsId(null)} title={detailsProblem ? detailsProblem.id + ' — Details' : ''}>
         {detailsProblem && (
           <>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">What&apos;s Happening</div>
-              <div className="pdd-text">{detailsProblem.description}</div>
+            <div className="mb-5">
+              <div className="mb-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">What&apos;s Happening</div>
+              <div className="text-[12.5px] leading-relaxed text-foreground/80">{detailsProblem.description}</div>
             </div>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">Why It Matters</div>
-              <div className="pdd-text">{detailsProblem.whyItMatters}</div>
+            <div className="mb-5">
+              <div className="mb-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Why It Matters</div>
+              <div className="text-[12.5px] leading-relaxed text-foreground/80">{detailsProblem.whyItMatters}</div>
             </div>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">Current Intervention Status</div>
-              <div className="pdd-text">{execResultText(detailsProblem)}</div>
+            <div className="mb-5">
+              <div className="mb-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Current Intervention Status</div>
+              <div className="text-[12.5px] leading-relaxed text-foreground/80">{execResultText(detailsProblem)}</div>
             </div>
             {detailsProblem.executiveDecision && (
-              <div className="pdd-section">
-                <div className="pdd-section-hd">Decision Needed</div>
-                <Callout kind="orange" style={{ marginBottom: 0 }}>{detailsProblem.executiveDecision}</Callout>
+              <div className="mb-5">
+                <div className="mb-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">Decision Needed</div>
+                <Callout kind="orange" className="mb-0">{detailsProblem.executiveDecision}</Callout>
               </div>
             )}
-            <button
-              className="btn btn-p"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
-              onClick={() => router.push('/problems/' + detailsProblem.id)}
-            >
+            <Button className="mt-1 w-full" onClick={() => router.push('/problems/' + detailsProblem.id)}>
               Open Full Workspace →
-            </button>
+            </Button>
           </>
         )}
       </SlidePanel>

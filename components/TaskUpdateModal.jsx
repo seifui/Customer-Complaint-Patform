@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import SlidePanel from './SlidePanel';
 import Select from './Select';
 import { useStore } from '@/lib/store';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 export default function TaskUpdateModal({ taskId, onClose, onSaved }) {
   const actions = useStore((s) => s.actions);
@@ -18,8 +22,8 @@ export default function TaskUpdateModal({ taskId, onClose, onSaved }) {
       title={a ? a.id + ' — ' + a.team : ''}
       footer={
         <>
-          <button className="btn btn-gh" onClick={onClose}>Cancel</button>
-          <button className="btn btn-p" onClick={() => saveRef.current && saveRef.current()}>Save Update</button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => saveRef.current && saveRef.current()}>Save Update</Button>
         </>
       }
     >
@@ -72,11 +76,11 @@ function TaskForm({ action: a, onClose, onSaved, exposeSave }) {
   });
 
   return (
-    <>
-      <div className="form-row">
-        <label className="form-lbl">Problem</label>
+    <div className="space-y-4">
+      <div>
+        <Label className="mb-1.5">Problem</Label>
         <div
-          className="tx-link"
+          className="cursor-pointer text-xs text-primary underline underline-offset-2"
           onClick={() => {
             onClose();
             router.push('/problems/' + a.problem);
@@ -85,36 +89,36 @@ function TaskForm({ action: a, onClose, onSaved, exposeSave }) {
           {a.problem} — {p?.title}
         </div>
       </div>
-      <div className="form-row">
-        <label className="form-lbl">Intervention</label>
-        <div style={{ fontSize: 12.5 }}>{a.intervention || a.title}</div>
+      <div>
+        <Label className="mb-1.5">Intervention</Label>
+        <div className="text-[12.5px]">{a.intervention || a.title}</div>
       </div>
-      <div className="grid g2" style={{ gap: 10 }}>
-        <div className="form-row">
-          <label className="form-lbl">Owner</label>
-          <input className="form-inp" value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} placeholder="Assign an owner" />
+      <div className="grid grid-cols-2 gap-2.5">
+        <div>
+          <Label className="mb-1.5">Owner</Label>
+          <Input value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} placeholder="Assign an owner" />
         </div>
-        <div className="form-row">
-          <label className="form-lbl">Deadline</label>
-          <input className="form-inp" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-        </div>
-      </div>
-      <div className="form-row">
-        <label className="form-lbl">Target Metric</label>
-        <input className="form-inp" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="e.g. Reduce repeat contacts by 40%" />
-      </div>
-      <div className="grid g2" style={{ gap: 10 }}>
-        <div className="form-row">
-          <label className="form-lbl">Current Result</label>
-          <input className="form-inp" value={form.result} onChange={(e) => setForm({ ...form, result: e.target.value })} placeholder="e.g. Repeat contacts down 28%" />
-        </div>
-        <div className="form-row">
-          <label className="form-lbl">Progress %</label>
-          <input className="form-inp" type="number" min="0" max="100" value={form.progress} onChange={(e) => setForm({ ...form, progress: e.target.value })} />
+        <div>
+          <Label className="mb-1.5">Deadline</Label>
+          <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
         </div>
       </div>
-      <div className="form-row">
-        <label className="form-lbl">Status</label>
+      <div>
+        <Label className="mb-1.5">Target Metric</Label>
+        <Input value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="e.g. Reduce repeat contacts by 40%" />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <div>
+          <Label className="mb-1.5">Current Result</Label>
+          <Input value={form.result} onChange={(e) => setForm({ ...form, result: e.target.value })} placeholder="e.g. Repeat contacts down 28%" />
+        </div>
+        <div>
+          <Label className="mb-1.5">Progress %</Label>
+          <Input type="number" min="0" max="100" value={form.progress} onChange={(e) => setForm({ ...form, progress: e.target.value })} />
+        </div>
+      </div>
+      <div>
+        <Label className="mb-1.5">Status</Label>
         <Select
           value={form.status}
           onChange={(v) => setForm({ ...form, status: v })}
@@ -125,23 +129,23 @@ function TaskForm({ action: a, onClose, onSaved, exposeSave }) {
           ]}
         />
       </div>
-      <div className="form-row">
-        <label className="form-lbl">Customer Outcome</label>
-        <input className="form-inp" value={form.outcome} onChange={(e) => setForm({ ...form, outcome: e.target.value })} placeholder="What does the customer experience once this ships?" />
+      <div>
+        <Label className="mb-1.5">Customer Outcome</Label>
+        <Input value={form.outcome} onChange={(e) => setForm({ ...form, outcome: e.target.value })} placeholder="What does the customer experience once this ships?" />
       </div>
-      <div className="form-row" style={{ marginBottom: 0 }}>
-        <label className="form-lbl">Notes</label>
-        <div style={{ fontSize: 11.5, color: 'var(--tx1)', marginBottom: 6 }}>
+      <div>
+        <Label className="mb-1.5">Notes</Label>
+        <div className="mb-1.5 text-[11.5px] text-foreground/80">
           {a.notes.length ? (
             a.notes.map((n, i) => (
-              <div key={i} style={{ marginBottom: 4 }}>• {n}</div>
+              <div key={i} className="mb-1">• {n}</div>
             ))
           ) : (
-            <span className="muted">No notes yet.</span>
+            <span className="text-muted-foreground">No notes yet.</span>
           )}
         </div>
-        <textarea className="form-inp" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note…" style={{ minHeight: 50 }} />
+        <Textarea className="min-h-12.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note…" />
       </div>
-    </>
+    </div>
   );
 }

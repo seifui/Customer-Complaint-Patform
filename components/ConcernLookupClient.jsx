@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 // Read-only lookup for Agent/Branch staff answering "what happened to my
 // complaint?" calls. Search spans every concern, not just ones this staff
@@ -22,20 +24,18 @@ export default function ConcernLookupClient({ session }) {
 
   return (
     <>
-      <div className="fb">
-        <input
-          className="fi"
-          style={{ flex: 1 }}
+      <div className="mb-4">
+        <Input
           placeholder="Search by Tracking ID, Customer Name, or NIC..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
-      <div className="card">
-        <div className="section-hint" style={{ display: 'block', marginBottom: 14 }}>Showing {filtered.length} Concerns</div>
+      <Card className="gap-0 py-0">
+        <div className="border-b px-4 py-3 text-[11px] text-muted-foreground">Showing {filtered.length} Concerns</div>
         <QueueTable list={filtered} onOpen={setOpenId} />
-      </div>
+      </Card>
       <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} session={session} />
     </>
   );

@@ -6,6 +6,7 @@ import { BarList } from './Charts';
 import { ConfBadge } from './Badges';
 import { useStore } from '@/lib/store';
 import { money, num, getValueDetail } from '@/lib/helpers';
+import { Button } from '@/components/ui/button';
 
 export default function ExplainModal({ problemId, kind, onClose }) {
   const problems = useStore((s) => s.problems);
@@ -17,61 +18,61 @@ export default function ExplainModal({ problemId, kind, onClose }) {
   const label = kind === 'risk' ? 'Customer Value at Risk' : 'Customer Value Protected';
 
   return (
-    <SlidePanel open={!!problemId} onClose={onClose} title={label} subtitle={p.id} footer={<button className="btn btn-gh" onClick={onClose}>Close</button>}>
+    <SlidePanel open={!!problemId} onClose={onClose} title={label} subtitle={p.id} footer={<Button variant="outline" onClick={onClose}>Close</Button>}>
       {!d ? (
-        <div className="empty">
-          <div className="empty-t">Not enough data yet to explain this number.</div>
+        <div className="px-5 py-10 text-center text-muted-foreground">
+          <div className="text-xs">Not enough data yet to explain this number.</div>
         </div>
       ) : (
         <>
-          <Callout kind="acc" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <Callout kind="acc" className="flex items-center justify-between gap-2.5">
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--fc)' }}>{money(amount)}</div>
-              <div className="muted" style={{ fontSize: 11 }}>{label}</div>
+              <div className="font-heading text-xl font-bold">{money(amount)}</div>
+              <div className="text-[11px] text-muted-foreground">{label}</div>
             </div>
             <ConfBadge label={d.confidence} />
           </Callout>
-          <div className="grid g2" style={{ gap: 10, marginBottom: 12 }}>
-            <div className="stat">
-              <div className="stat-l">Customers Included</div>
-              <div className="stat-v" style={{ fontSize: 15 }}>{num(d.customers)}</div>
+          <div className="mb-3 grid grid-cols-2 gap-2.5">
+            <div className="rounded-lg border bg-muted px-3.5 py-3">
+              <div className="mb-1.5 text-[10.5px] text-muted-foreground">Customers Included</div>
+              <div className="text-[15px] font-bold tracking-tight">{num(d.customers)}</div>
             </div>
-            <div className="stat">
-              <div className="stat-l">Estimated Churn Probability</div>
-              <div className="stat-v" style={{ fontSize: 12 }}>{d.churnProbability || 'Not yet modelled'}</div>
+            <div className="rounded-lg border bg-muted px-3.5 py-3">
+              <div className="mb-1.5 text-[10.5px] text-muted-foreground">Estimated Churn Probability</div>
+              <div className="text-xs font-bold tracking-tight">{d.churnProbability || 'Not yet modelled'}</div>
             </div>
           </div>
           {d.segments && (
-            <div className="form-row">
-              <label className="form-lbl">Customer Segments</label>
+            <div className="mb-4">
+              <div className="mb-1.5 text-[11.5px] font-semibold text-foreground/80">Customer Segments</div>
               <BarList items={d.segments.map((s) => ({ label: s.name, value: s.count }))} />
             </div>
           )}
           {d.products && (
-            <div className="form-row">
-              <label className="form-lbl">Products / Relationships at Risk</label>
-              <div className="pill-list">
+            <div className="mb-4">
+              <div className="mb-1.5 text-[11.5px] font-semibold text-foreground/80">Products / Relationships at Risk</div>
+              <div className="flex flex-wrap gap-1.5">
                 {d.products.map((x) => (
-                  <span className="pill" key={x}>{x}</span>
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-[10.5px] font-semibold text-foreground/80" key={x}>{x}</span>
                 ))}
               </div>
             </div>
           )}
-          <div className="form-row">
-            <label className="form-lbl">How This Was Calculated</label>
-            <div style={{ fontSize: 11.5, color: 'var(--tx1)', lineHeight: 1.6 }}>{d.calcText}</div>
+          <div className="mb-4">
+            <div className="mb-1.5 text-[11.5px] font-semibold text-foreground/80">How This Was Calculated</div>
+            <div className="text-[11.5px] leading-relaxed text-muted-foreground">{d.calcText}</div>
           </div>
-          <div className="form-row">
-            <label className="form-lbl">Data Sources Used</label>
-            <ul style={{ paddingLeft: 16, fontSize: 11.5, color: 'var(--tx1)', lineHeight: 1.8 }}>
+          <div className="mb-4">
+            <div className="mb-1.5 text-[11.5px] font-semibold text-foreground/80">Data Sources Used</div>
+            <ul className="list-disc space-y-1 pl-4 text-[11.5px] leading-relaxed text-muted-foreground">
               {d.sources.map((s) => (
                 <li key={s}>{s}</li>
               ))}
             </ul>
           </div>
-          <div className="form-row" style={{ marginBottom: 0 }}>
-            <label className="form-lbl">Assumptions Made</label>
-            <ul style={{ paddingLeft: 16, fontSize: 11.5, color: 'var(--tx1)', lineHeight: 1.8 }}>
+          <div>
+            <div className="mb-1.5 text-[11.5px] font-semibold text-foreground/80">Assumptions Made</div>
+            <ul className="list-disc space-y-1 pl-4 text-[11.5px] leading-relaxed text-muted-foreground">
               {d.assumptions.map((s) => (
                 <li key={s}>{s}</li>
               ))}
@@ -85,7 +86,7 @@ export default function ExplainModal({ problemId, kind, onClose }) {
 
 export function ExplainTrigger({ onOpen }) {
   return (
-    <span className="tx-link" style={{ fontSize: 10 }} onClick={(e) => { e.stopPropagation(); onOpen(); }}>
+    <span className="cursor-pointer text-[10px] text-primary underline underline-offset-2" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
       ⓘ Explain this number
     </span>
   );
