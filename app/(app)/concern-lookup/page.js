@@ -1,7 +1,8 @@
+import { redirect } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
-import ConcernLookupClient from '@/components/ConcernLookupClient';
 
+// Legacy route for branch/agent "Concern Queue" — same UI as /queue.
 export default async function Page() {
-  const session = await requireRole(['agent', 'branch']);
-  return <ConcernLookupClient session={session} />;
+  await requireRole(['agent', 'branch']);
+  redirect('/queue');
 }

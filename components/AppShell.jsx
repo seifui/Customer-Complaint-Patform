@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, ChevronsUpDown, Inbox, LayoutGrid, Layers, ListChecks, LogOut, Target } from 'lucide-react';
-import { NAV_ITEMS } from '@/lib/nav';
+import { Bell, ChevronsUpDown, Download, Inbox, LayoutGrid, Layers, ListChecks, LogOut } from 'lucide-react';
+import { NAV_ITEMS, PROFILE_NAV_ITEMS } from '@/lib/nav';
 import { routeMetaFor } from '@/lib/routeMeta';
 import { useStore } from '@/lib/store';
 import { logoutAction } from '@/lib/actions';
@@ -21,9 +21,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { canManageConcerns } from '@/lib/constants';
 
-const ICONS = { rects: LayoutGrid, queue: Layers, inbox: Inbox, target: Target, check: ListChecks };
+const ICONS = { rects: LayoutGrid, queue: Layers, inbox: Inbox, check: ListChecks };
 
 const NOTIFICATIONS = [
   { msg: <>Problem <b>PRB-2044</b> crossed 1,200 linked concerns — priority escalated to Critical</>, meta: '6m ago' },
@@ -35,19 +37,38 @@ export default function AppShell({ session, children }) {
   const pathname = usePathname();
 
   const concerns = useStore((s) => s.concerns);
-  const problems = useStore((s) => s.problems);
   const actions = useStore((s) => s.actions);
   const captureDrawerOpen = useStore((s) => s.captureDrawerOpen);
   const closeCaptureDrawer = useStore((s) => s.closeCaptureDrawer);
 
   const queueCount = concerns.length;
-  const problemCount = problems.filter((p) => p.status !== 'resolved').length;
   const myTasksCount = actions.filter((a) => a.owner === session.name && a.status !== 'done').length;
 
-  const badgeValues = { queue: queueCount, problems: problemCount, mytasks: myTasksCount };
+  const badgeValues = { queue: queueCount, mytasks: myTasksCount };
+  const profileNavItems = PROFILE_NAV_ITEMS.filter((it) => it.roles.includes(session.role));
   const [routeTitle, sub] = routeMetaFor(pathname);
-  const isDashboard = pathname === '/dashboard';
+  const isDashboard = pathname === '/dashboard' || pathname === '/my-dashboard';
+  const isRaisedConcerns = pathname === '/mine';
+  const isAllConcerns = pathname === '/queue';
+  const isConcernDetail = pathname.startsWith('/queue/') && pathname !== '/queue';
   const title = isDashboard ? 'Welcome, ' + session.name.split(' ')[0] : routeTitle;
+
+  function exportConcerns() {
+    const headers = ['Tracking ID', 'Channel', 'Customer', 'Journey', 'Severity', 'Sentiment', 'Summary', 'Created', 'Assignee'];
+    const rows = concerns.map((c) =>
+      [c.id, c.channel, c.customer, c.journey, c.severity, c.sentiment, c.summary, c.createdAt, c.assignee || '']
+        .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all-concerns.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -56,7 +77,7 @@ export default function AppShell({ session, children }) {
         <div className="flex h-14 shrink-0 items-center px-4">
           <Logo size={28} />
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
           {NAV_ITEMS.filter((it) => it.roles.includes(session.role)).map((it) => {
             const active = pathname === it.href || (it.href !== '/' && pathname.startsWith(it.href + '/'));
             const Icon = ICONS[it.iconType];
@@ -99,6 +120,20 @@ export default function AppShell({ session, children }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-(--anchor-width)">
               <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">{session.name}</div>
+              {profileNavItems.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  {profileNavItems.map((it) => {
+                    const Icon = ICONS[it.iconType];
+                    return (
+                      <DropdownMenuItem key={it.href} render={<Link href={it.href} />}>
+                        {Icon && <Icon />}
+                        {it.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
+              )}
               <DropdownMenuSeparator />
               <form action={logoutAction}>
                 <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
@@ -112,37 +147,88 @@ export default function AppShell({ session, children }) {
 
       {/* MAIN */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className={cn('flex-1 overflow-y-auto px-8', isAllConcerns ? 'pt-6 pb-8' : 'py-8')}>
           <div key={pathname}>
-            <div className="mb-7 flex items-start justify-between gap-4">
+            <div
+              className={cn(
+                'flex items-start justify-between gap-4',
+                isAllConcerns ? 'mb-6' : isRaisedConcerns ? 'mb-6' : 'mb-7'
+              )}
+            >
               <div>
-                <h1 className={isDashboard ? 'font-heading text-3xl font-medium tracking-tight' : 'text-xl font-semibold tracking-tight'}>{title}</h1>
-                {sub && <p className="mt-1.5 text-[12.5px] text-muted-foreground">{sub}</p>}
+                <h1
+                  className={cn(
+                    isDashboard
+                      ? 'font-heading text-3xl font-medium tracking-[0.015em]'
+                      : isAllConcerns || isConcernDetail
+                        ? 'text-2xl font-semibold tracking-[-0.01em] text-foreground'
+                        : 'text-xl font-semibold tracking-[0.015em]',
+                    isConcernDetail && 'font-mono'
+                  )}
+                >
+                  {title}
+                </h1>
+                {sub && <p className={cn('text-[12.5px] text-muted-foreground', isRaisedConcerns ? 'mt-2' : 'mt-1.5')}>{sub}</p>}
               </div>
-              <div className="flex shrink-0 items-center gap-2 pt-0.5">
-                <ThemeToggle />
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button variant="outline" size="icon" className="relative rounded-full">
-                        <Bell className="size-4" />
-                        <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-red-500" />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="end" className="w-80 p-0">
-                    <div className="border-b px-3.5 py-2.5 text-[12.5px] font-semibold">Notifications</div>
-                    {NOTIFICATIONS.map((n, i) => (
-                      <div key={i} className="flex gap-2.5 border-b px-3.5 py-3 last:border-b-0">
-                        <div className="mt-1 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
-                        <div>
-                          <div className="text-[11.5px] leading-relaxed">{n.msg}</div>
-                          <div className="mt-0.5 text-[10px] text-muted-foreground">{n.meta}</div>
+              <div className="flex shrink-0 items-center pt-0.5">
+                {isAllConcerns && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Export concerns"
+                          onClick={exportConcerns}
+                          className={cn(
+                            'mr-3 h-8 gap-1.5 rounded-full px-2.5 shadow-none',
+                            'text-muted-foreground',
+                            'hover:bg-muted hover:text-foreground',
+                            'transition-[color,background-color] duration-150',
+                            'cursor-pointer'
+                          )}
+                        />
+                      }
+                    >
+                      <Download className="size-3.5" data-icon="inline-start" />
+                      Export
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Export concerns</TooltipContent>
+                  </Tooltip>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <ThemeToggle />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="relative overflow-visible rounded-full"
+                        >
+                          <Bell className="size-4" />
+                          <span
+                            aria-hidden="true"
+                            className="absolute -top-0.5 -right-0.5 size-2 rounded-full border-2 border-background bg-red-500"
+                          />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end" className="w-80 p-0">
+                      <div className="border-b px-3.5 py-2.5 text-[12.5px] font-semibold">Notifications</div>
+                      {NOTIFICATIONS.map((n, i) => (
+                        <div key={i} className="flex gap-2.5 border-b px-3.5 py-3 last:border-b-0">
+                          <div className="mt-1 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                          <div>
+                            <div className="text-[11.5px] leading-relaxed">{n.msg}</div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">{n.meta}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
             {children}
@@ -152,7 +238,7 @@ export default function AppShell({ session, children }) {
 
       <Toast />
 
-      {['agent', 'branch', 'manager'].includes(session.role) && (
+      {canManageConcerns(session.role) && (
         <CaptureConcernDrawer session={session} open={captureDrawerOpen} onClose={closeCaptureDrawer} />
       )}
     </div>

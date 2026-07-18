@@ -26,8 +26,7 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
   const addConcern = useStore((s) => s.addConcern);
   const showToast = useStore((s) => s.showToast);
 
-  const defaultChannel = session.role === 'branch' ? 'Branch' : 'Call Centre';
-  const [channel, setChannel] = useState(defaultChannel);
+  const [channel, setChannel] = useState('Call Centre');
   const [desc, setDesc] = useState('');
   const [showForwardedEmail, setShowForwardedEmail] = useState(false);
   const [forwardedEmail, setForwardedEmail] = useState('');

@@ -27,7 +27,7 @@ export default function TrackByTicket({ initialQuery = '', autoSearch = false })
   return (
     <div>
       <form onSubmit={lookup} className="mb-1 flex gap-2">
-        <Input placeholder="e.g. CH-2026-000128" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Input placeholder="e.g. CH-00128" value={query} onChange={(e) => setQuery(e.target.value)} />
         <Button type="submit" className="shrink-0">Check</Button>
       </form>
       <p className="mb-4 text-[11px] text-muted-foreground">Enter the reference number you received when you reported your concern.</p>
