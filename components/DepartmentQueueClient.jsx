@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import QueueTable from './QueueTable';
 import ConcernDetailPanel from './ConcernDetailPanel';
+import { Card } from '@/components/ui/card';
 
 // Deliberately generic — filters on session.department rather than any
 // specific department name, so this one page serves every Department
@@ -16,12 +17,12 @@ export default function DepartmentQueueClient({ session }) {
 
   return (
     <>
-      <div className="card">
-        <div className="section-hint" style={{ display: 'block', marginBottom: 14 }}>
+      <Card className="gap-0 py-0">
+        <div className="border-b px-4 py-3 text-[11px] text-muted-foreground">
           {session.department} Department · Showing {mine.length} {mine.length === 1 ? 'Concern' : 'Concerns'}
         </div>
         <QueueTable list={mine} onOpen={setOpenId} />
-      </div>
+      </Card>
       <ConcernDetailPanel concernId={openId} onClose={() => setOpenId(null)} session={session} />
     </>
   );

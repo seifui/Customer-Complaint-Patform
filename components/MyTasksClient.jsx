@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import TaskCard from './TaskCard';
 import TaskUpdateModal from './TaskUpdateModal';
+import { Card } from '@/components/ui/card';
 
 export default function MyTasksClient({ session }) {
   const actions = useStore((s) => s.actions);
@@ -12,16 +13,16 @@ export default function MyTasksClient({ session }) {
 
   return (
     <>
-      <div className="card">
-        <div className="section-title">
-          Assigned to {session.name} <span className="section-hint">{mine.length} interventions — is each one actually working?</span>
+      <Card className="px-4.5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-bold">
+          Assigned to {session.name} <span className="text-[11px] font-normal text-muted-foreground">{mine.length} interventions — is each one actually working?</span>
         </div>
         {mine.length ? (
           mine.map((a) => <TaskCard a={a} key={a.id} onOpen={setOpenTaskId} />)
         ) : (
-          <div className="empty"><div className="empty-t">No interventions assigned yet.</div></div>
+          <div className="px-5 py-10 text-center text-muted-foreground"><div className="text-xs">No interventions assigned yet.</div></div>
         )}
-      </div>
+      </Card>
       <TaskUpdateModal taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </>
   );

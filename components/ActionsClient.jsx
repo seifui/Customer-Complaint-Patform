@@ -6,6 +6,7 @@ import Callout from './Callout';
 import Select from './Select';
 import TaskCard from './TaskCard';
 import TaskUpdateModal from './TaskUpdateModal';
+import { Button } from '@/components/ui/button';
 
 const COLUMNS = [
   ['todo', 'To Do'],
@@ -13,6 +14,7 @@ const COLUMNS = [
   ['done', 'Done'],
 ];
 const TEAMS = ['Technology', 'Digital Banking', 'Customer Service', 'Product', 'Leadership'];
+const ALL = '__all__';
 
 export default function ActionsClient() {
   const actions = useStore((s) => s.actions);
@@ -35,40 +37,42 @@ export default function ActionsClient() {
         Every action stays connected to the customer problem it&apos;s solving, the intervention being tested, its target metric, and the actual result — problem → intervention → owner →
         target → progress → customer outcome.
       </Callout>
-      <div className="fb">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Select
           variant="pill"
-          value={filters.problem}
-          onChange={(v) => setFilters({ ...filters, problem: v })}
+          value={filters.problem || ALL}
+          onChange={(v) => setFilters({ ...filters, problem: v === ALL ? '' : v })}
           options={[
-            { value: '', label: 'All Problems' },
+            { value: ALL, label: 'All Problems' },
             ...problems.map((p) => ({ value: p.id, label: p.id + ' — ' + (p.title.length > 26 ? p.title.slice(0, 26) + '…' : p.title) })),
           ]}
         />
         <Select
           variant="pill"
-          value={filters.team}
-          onChange={(v) => setFilters({ ...filters, team: v })}
-          options={[{ value: '', label: 'All Teams' }, ...TEAMS]}
+          value={filters.team || ALL}
+          onChange={(v) => setFilters({ ...filters, team: v === ALL ? '' : v })}
+          options={[{ value: ALL, label: 'All Teams' }, ...TEAMS]}
         />
         <Select
           variant="pill"
-          value={filters.owner}
-          onChange={(v) => setFilters({ ...filters, owner: v })}
-          options={[{ value: '', label: 'All Owners' }, 'Unassigned', ...owners]}
+          value={filters.owner || ALL}
+          onChange={(v) => setFilters({ ...filters, owner: v === ALL ? '' : v })}
+          options={[{ value: ALL, label: 'All Owners' }, 'Unassigned', ...owners]}
         />
-        <button className="btn btn-gh" onClick={() => setFilters({ team: '', owner: '', problem: '' })}>Reset</button>
+        <Button variant="outline" onClick={() => setFilters({ team: '', owner: '', problem: '' })}>Reset</Button>
       </div>
-      <div className="kanban">
+      <div className="grid grid-cols-3 gap-4">
         {COLUMNS.map(([key, label]) => {
           const items = filtered.filter((a) => a.status === key);
           return (
-            <div className="kanban-col" key={key}>
-              <div className="kanban-hd">{label} <span className="kanban-count">{items.length}</span></div>
+            <div className="rounded-xl border bg-muted/40 p-3.5" key={key}>
+              <div className="mb-3 flex items-center justify-between text-[10.5px] font-bold tracking-wide text-foreground/80 uppercase">
+                {label} <span className="font-mono font-normal text-muted-foreground normal-case">{items.length}</span>
+              </div>
               {items.length ? (
                 items.map((a) => <TaskCard a={a} key={a.id} onOpen={setOpenTaskId} />)
               ) : (
-                <div className="empty" style={{ padding: '20px 0' }}><div className="empty-t">Empty</div></div>
+                <div className="py-5 text-center text-muted-foreground"><div className="text-xs">Empty</div></div>
               )}
             </div>
           );

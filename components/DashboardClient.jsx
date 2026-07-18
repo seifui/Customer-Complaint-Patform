@@ -1,224 +1,51 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { money, num } from '@/lib/helpers';
-import { SevBadge, StatusBadge } from './Badges';
-import FlowStrip from './FlowStrip';
-import ExplainModal from './ExplainModal';
-import OverflowMenu from './OverflowMenu';
-import SlidePanel from './SlidePanel';
-import Callout from './Callout';
-
-function execResultText(p) {
-  if (!p.impact.after) return 'No intervention started yet — awaiting owner and deadline.';
-  const repPct = Math.round((1 - p.impact.after.repeat / p.impact.before.repeat) * 100);
-  return 'Repeat contacts down ' + repPct + '% since intervention began (' + p.startedAt + ').';
-}
+import { buildDashboardMetrics } from '@/lib/dashboardMetrics';
+import KpiRow from '@/components/dashboard/KpiRow';
+import {
+  ConcernVolumeChart,
+  ResolutionTrendChart,
+  StatusDonutChart,
+  SeverityPieChart,
+  ChannelBarChart,
+} from '@/components/dashboard/Charts';
+import DepartmentTable from '@/components/dashboard/DepartmentTable';
+import AttentionPanel from '@/components/dashboard/AttentionPanel';
 
 export default function DashboardClient() {
-  const router = useRouter();
   const problems = useStore((s) => s.problems);
-  const [explain, setExplain] = useState(null); // { problemId, kind }
-  const [attnOpen, setAttnOpen] = useState(false);
-  const [detailsId, setDetailsId] = useState(null);
-
-  const execProblems = problems.filter((p) => p.executiveDecision);
-  const bySeverity = { critical: 0, high: 0, medium: 0, low: 0 };
-  execProblems.forEach((p) => bySeverity[p.severity]++);
-  const valueAtRiskTotal = problems.filter((p) => p.status !== 'resolved').reduce((s, p) => s + p.valueAtRisk, 0);
-  const disengagementTotal = problems.reduce((s, p) => s + p.disengagement, 0);
-  const rapidlyGrowing = problems.filter((p) => p.trendPct >= 50).length;
-  const valueProtected = problems.reduce((s, p) => s + (p.impact.after ? p.impact.after.valueProtected || 0 : 0), 0);
-  const improving = problems.filter((p) => p.impact.after).length;
-  const allSorted = [...problems].sort((a, b) => (b.severity === 'critical') - (a.severity === 'critical') || b.concernCount - a.concernCount);
-  const detailsProblem = detailsId ? problems.find((p) => p.id === detailsId) : null;
+  const concerns = useStore((s) => s.concerns);
+  const metrics = buildDashboardMetrics(concerns, problems);
 
   return (
-    <>
-      <div className="dash-block">
-        <div className={'attn-card' + (attnOpen ? ' open' : '')} onClick={() => setAttnOpen((v) => !v)}>
-          <div className="attn-card-icon">⚠</div>
-          <div className="attn-card-body">
-            <div className="attn-card-count">{execProblems.length} Problems Need Your Attention</div>
-            <div className="attn-card-sub">Each is awaiting an executive decision — click to see the list</div>
-          </div>
-          <div className="attn-card-breakdown">
-            {bySeverity.critical > 0 && <span className="badge sev-critical">{bySeverity.critical} Critical</span>}
-            {bySeverity.high > 0 && <span className="badge sev-high">{bySeverity.high} High</span>}
-          </div>
-          <div className={'attn-card-cta' + (attnOpen ? ' open' : '')}>
-            {attnOpen ? 'Hide' : 'View'}
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 3.2l4 4 4-4" /></svg>
-          </div>
+    <div className="flex flex-col gap-6 pb-8">
+      <section>
+        <div className="mb-3.5 text-[13px] font-semibold text-muted-foreground">Operational Health</div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <StatusDonutChart data={metrics.statusDistribution} />
+          <SeverityPieChart data={metrics.severityDistribution} />
+          <ChannelBarChart data={metrics.channelDistribution} />
         </div>
+      </section>
 
-        {attnOpen && (
-          <div className="attn-list">
-            {execProblems.map((p) => (
-              <div className="pcard" key={p.id}>
-                <div className="pcard-hd">
-                  <div>
-                    <div className="pcard-title">{p.title}</div>
-                    <div className="pcard-id">{p.id}</div>
-                  </div>
-                  <div className="pcard-badges">
-                    <SevBadge s={p.severity} />
-                    <StatusBadge s={p.status} />
-                  </div>
-                </div>
-                <div className="pcard-stats">
-                  <div>
-                    <div className="pcard-stat-l">Affected</div>
-                    <div className="pcard-stat-v">{num(p.affectedCustomers)}</div>
-                  </div>
-                  <div>
-                    <div className="pcard-stat-l">Value at Risk</div>
-                    <div className="pcard-stat-v">{money(p.valueAtRisk)}</div>
-                  </div>
-                  <div>
-                    <div className="pcard-stat-l">Trend</div>
-                    <div className="pcard-stat-v" style={{ color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>
-                      {p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="pcard-stat-l">Owner</div>
-                    <div className="pcard-stat-v" style={{ fontSize: 12 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</div>
-                  </div>
-                </div>
-                <div className="pcard-ft">
-                  <span className="muted" style={{ fontSize: 10.5 }}>Last updated {p.startedAt !== '—' ? p.startedAt : 'not yet started'}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <button className="btn btn-p btn-sm" onClick={() => router.push('/problems/' + p.id)}>Open Workspace</button>
-                    <OverflowMenu
-                      items={[
-                        { label: 'View Details', onClick: () => setDetailsId(p.id) },
-                        { label: 'Explain Value at Risk', onClick: () => setExplain({ problemId: p.id, kind: 'risk' }) },
-                      ]}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <DepartmentTable departments={metrics.departments} />
 
-      <div className="dash-block">
-        <div className="section-title" style={{ fontSize: 13, color: 'var(--tx2)' }}>Executive Metrics</div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', gap: 12 }}>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--red-d)', color: 'var(--red)' }}>⚠</span>Value at Risk</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{money(valueAtRiskTotal)}</div>
-            <div className="kpi-s">Across open problems</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--orange-d)', color: 'var(--orange)' }}>📉</span>Disengagement Signals</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{num(disengagementTotal)}</div>
-            <div className="kpi-s">Customers pulling back</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--purple-d)', color: 'var(--purple)' }}>📈</span>Rapidly Growing</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{rapidlyGrowing}</div>
-            <div className="kpi-s">Problems trending ↑50%+</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--acc-d)', color: 'var(--acc)' }}>🛡</span>Value Protected</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{money(valueProtected)}</div>
-            <div className="kpi-s up">This month</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-l"><span className="kpi-icon" style={{ background: 'var(--green-d)', color: 'var(--green)' }}>✓</span>Improving</div>
-            <div className="kpi-v" style={{ fontSize: 20 }}>{improving}</div>
-            <div className="kpi-s up">After intervention</div>
-          </div>
+      <KpiRow kpis={metrics.kpis} />
+
+      <section>
+        <div className="mb-3.5 text-[13px] font-semibold text-muted-foreground">Company Trends</div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <ConcernVolumeChart data={metrics.concernVolume} />
+          <ResolutionTrendChart data={metrics.resolutionTrend} />
         </div>
-      </div>
+      </section>
 
-      <div className="dash-block">
-        <div className="section-title" style={{ fontSize: 13, color: 'var(--tx2)' }}>
-          All Emerging Problems <span className="section-hint">click a row to open the Problem Workspace</span>
-        </div>
-        <div className="card">
-          <div className="tbl-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Problem</th>
-                  <th>Severity</th>
-                  <th>Status</th>
-                  <th>Trend</th>
-                  <th>Affected</th>
-                  <th>Value at Risk</th>
-                  <th>Owner</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allSorted.map((p) => (
-                  <tr key={p.id} onClick={() => router.push('/problems/' + p.id)}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{p.title}</div>
-                      <div className="muted mono" style={{ fontSize: 10 }}>{p.id}</div>
-                    </td>
-                    <td><SevBadge s={p.severity} /></td>
-                    <td><StatusBadge s={p.status} /></td>
-                    <td style={{ color: p.trendPct >= 0 ? 'var(--red)' : 'var(--green)' }}>{p.trendPct >= 0 ? '↑' : '↓'} {Math.abs(p.trendPct)}%</td>
-                    <td className="mono">{num(p.affectedCustomers)}</td>
-                    <td className="mono">{money(p.valueAtRisk)}</td>
-                    <td className="muted" style={{ fontSize: 11 }}>{p.owner === '—' ? 'Unassigned' : p.owner.split('—')[0]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="dash-block">
-        <div className="card" style={{ background: 'linear-gradient(135deg,var(--acc-d2),transparent)' }}>
-          <div className="section-title">The Continuous Learning Loop</div>
-          <FlowStrip steps={['More Data', 'Smarter AI', 'Better Actions', 'Better Outcomes']} />
-          <div className="muted" style={{ fontSize: 11.5 }}>
-            We do not help the bank close more complaints. We help it identify and fix the customer problems that keep happening again and again.
-          </div>
-        </div>
-      </div>
-
-      <SlidePanel open={!!detailsProblem} onClose={() => setDetailsId(null)} title={detailsProblem ? detailsProblem.id + ' — Details' : ''}>
-        {detailsProblem && (
-          <>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">What&apos;s Happening</div>
-              <div className="pdd-text">{detailsProblem.description}</div>
-            </div>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">Why It Matters</div>
-              <div className="pdd-text">{detailsProblem.whyItMatters}</div>
-            </div>
-            <div className="pdd-section">
-              <div className="pdd-section-hd">Current Intervention Status</div>
-              <div className="pdd-text">{execResultText(detailsProblem)}</div>
-            </div>
-            {detailsProblem.executiveDecision && (
-              <div className="pdd-section">
-                <div className="pdd-section-hd">Decision Needed</div>
-                <Callout kind="orange" style={{ marginBottom: 0 }}>{detailsProblem.executiveDecision}</Callout>
-              </div>
-            )}
-            <button
-              className="btn btn-p"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
-              onClick={() => router.push('/problems/' + detailsProblem.id)}
-            >
-              Open Full Workspace →
-            </button>
-          </>
-        )}
-      </SlidePanel>
-
-      <ExplainModal problemId={explain?.problemId} kind={explain?.kind} onClose={() => setExplain(null)} />
-    </>
+      <AttentionPanel
+        recommendation={metrics.recommendation}
+        alerts={metrics.alerts}
+        activity={metrics.activity}
+      />
+    </div>
   );
 }

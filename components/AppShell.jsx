@@ -1,16 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NAV_ITEMS } from '@/lib/nav';
+import { Bell, ChevronsUpDown, Download, Inbox, LayoutGrid, Layers, ListChecks, LogOut } from 'lucide-react';
+import { NAV_ITEMS, PROFILE_NAV_ITEMS } from '@/lib/nav';
 import { routeMetaFor } from '@/lib/routeMeta';
 import { useStore } from '@/lib/store';
 import { logoutAction } from '@/lib/actions';
-import NavIcon from './NavIcon';
 import Toast from './Toast';
 import ThemeToggle from './ThemeToggle';
 import CaptureConcernDrawer from './CaptureConcernDrawer';
+import Logo from './Logo';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { canManageConcerns } from '@/lib/constants';
+
+const ICONS = { rects: LayoutGrid, queue: Layers, inbox: Inbox, check: ListChecks };
 
 const NOTIFICATIONS = [
   { msg: <>Problem <b>PRB-2044</b> crossed 1,200 linked concerns — priority escalated to Critical</>, meta: '6m ago' },
@@ -20,91 +35,199 @@ const NOTIFICATIONS = [
 
 export default function AppShell({ session, children }) {
   const pathname = usePathname();
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
 
   const concerns = useStore((s) => s.concerns);
-  const problems = useStore((s) => s.problems);
   const actions = useStore((s) => s.actions);
   const captureDrawerOpen = useStore((s) => s.captureDrawerOpen);
   const closeCaptureDrawer = useStore((s) => s.closeCaptureDrawer);
 
   const queueCount = concerns.length;
-  const problemCount = problems.filter((p) => p.status !== 'resolved').length;
   const myTasksCount = actions.filter((a) => a.owner === session.name && a.status !== 'done').length;
 
-  const badgeValues = { queue: queueCount, problems: problemCount, mytasks: myTasksCount };
-  const [title, sub] = routeMetaFor(pathname);
+  const badgeValues = { queue: queueCount, mytasks: myTasksCount };
+  const profileNavItems = PROFILE_NAV_ITEMS.filter((it) => it.roles.includes(session.role));
+  const [routeTitle, sub] = routeMetaFor(pathname);
+  const isDashboard = pathname === '/dashboard' || pathname === '/my-dashboard';
+  const isRaisedConcerns = pathname === '/mine';
+  const isAllConcerns = pathname === '/queue';
+  const isConcernDetail = pathname.startsWith('/queue/') && pathname !== '/queue';
+  const title = isDashboard ? 'Welcome, ' + session.name.split(' ')[0] : routeTitle;
+
+  function exportConcerns() {
+    const headers = ['Tracking ID', 'Channel', 'Customer', 'Journey', 'Severity', 'Sentiment', 'Summary', 'Created', 'Assignee'];
+    const rows = concerns.map((c) =>
+      [c.id, c.channel, c.customer, c.journey, c.severity, c.sentiment, c.summary, c.createdAt, c.assignee || '']
+        .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all-concerns.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
-    <div className="shell" onClick={() => { setNotifOpen(false); setUserOpen(false); }}>
+    <div className="flex h-screen overflow-hidden">
       {/* SIDEBAR */}
-      <div className="sb">
-        <div className="sb-logo">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-icon.png" alt="ConcernHub" className="sb-mark-img" />
-          <div className="sb-brand">
-            <div className="sb-brand-t">Concern<span className="brand-hub">Hub</span></div>
-          </div>
+      <aside className="flex w-62 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
+        <div className="flex h-14 shrink-0 items-center px-4">
+          <Logo size={28} />
         </div>
-        <div className="sb-nav">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
           {NAV_ITEMS.filter((it) => it.roles.includes(session.role)).map((it) => {
             const active = pathname === it.href || (it.href !== '/' && pathname.startsWith(it.href + '/'));
+            const Icon = ICONS[it.iconType];
             return (
-              <Link key={it.href} href={it.href} className={'sb-i' + (active ? ' on' : '')}>
-                <NavIcon type={it.iconType} />
-                <span className="sb-i-label">{it.label}</span>
-                {it.badge && <span className="sb-badge">{badgeValues[it.badge]}</span>}
+              <Link
+                key={it.href}
+                href={it.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                )}
+              >
+                {Icon && <Icon className="size-4.5 shrink-0 opacity-70 group-hover:opacity-100" />}
+                <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                {it.badge && (
+                  <Badge variant="secondary" className="shrink-0 rounded-full px-1.5 tabular-nums">
+                    {badgeValues[it.badge]}
+                  </Badge>
+                )}
               </Link>
             );
           })}
-        </div>
+        </nav>
 
-        <div className="sb-profile-wrap">
-          <div className={'sb-profile' + (userOpen ? ' open' : '')} onClick={(e) => { e.stopPropagation(); setUserOpen((v) => !v); }}>
-            <div className="sb-av">{session.init}</div>
-            <div className="sb-profile-info">
-              <div className="sb-un">{session.name}</div>
-              <div className="sb-ur">{session.title}{session.team ? <> · <b>{session.team}</b></> : null}</div>
-            </div>
-            <svg className="sb-profile-chevron" width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 5l4 4 4-4" /></svg>
-          </div>
-          <div className={'user-menu-drop' + (userOpen ? ' open' : '')} style={{ bottom: 'calc(100% + 4px)', left: 8, right: 8, width: 'auto' }}>
-            <form action={logoutAction}>
-              <button type="submit" className="user-menu-item danger" style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}>
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M5 1H2a1 1 0 00-1 1v10a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" /></svg>
-                Sign out
-              </button>
-            </form>
-          </div>
+        <div className="p-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg border p-2 text-left transition-colors hover:bg-sidebar-accent/60">
+              <Avatar size="sm">
+                <AvatarFallback className="bg-foreground text-background">{session.init}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 leading-tight">
+                <div className="truncate text-[12.5px] font-semibold">{session.name}</div>
+                <div className="truncate text-[10.5px] text-muted-foreground">
+                  {session.title}{session.team ? <> · <b className="font-medium text-foreground/70">{session.team}</b></> : null}
+                </div>
+              </div>
+              <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-(--anchor-width)">
+              <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">{session.name}</div>
+              {profileNavItems.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  {profileNavItems.map((it) => {
+                    const Icon = ICONS[it.iconType];
+                    return (
+                      <DropdownMenuItem key={it.href} render={<Link href={it.href} />}>
+                        {Icon && <Icon />}
+                        {it.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <form action={logoutAction}>
+                <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
+                  <LogOut /> Sign out
+                </DropdownMenuItem>
+              </form>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </div>
+      </aside>
 
       {/* MAIN */}
-      <div className="main">
-        <div className="content">
-          <div className="page-fade" key={pathname}>
-            <div className="page-hd">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className={cn('flex-1 overflow-y-auto px-8', isAllConcerns ? 'pt-6 pb-8' : 'py-8')}>
+          <div key={pathname}>
+            <div
+              className={cn(
+                'flex items-start justify-between gap-4',
+                isAllConcerns ? 'mb-6' : isRaisedConcerns ? 'mb-6' : 'mb-7'
+              )}
+            >
               <div>
-                <h1 className="page-title">{title}</h1>
-                {sub && <p className="page-sub">{sub}</p>}
+                <h1
+                  className={cn(
+                    isDashboard
+                      ? 'font-heading text-3xl font-medium tracking-[0.015em]'
+                      : isAllConcerns || isConcernDetail
+                        ? 'text-2xl font-semibold tracking-[-0.01em] text-foreground'
+                        : 'text-xl font-semibold tracking-[0.015em]',
+                    isConcernDetail && 'font-mono'
+                  )}
+                >
+                  {title}
+                </h1>
+                {sub && <p className={cn('text-[12.5px] text-muted-foreground', isRaisedConcerns ? 'mt-2' : 'mt-1.5')}>{sub}</p>}
               </div>
-              <div className="page-hd-actions">
-                <ThemeToggle />
-                <div className="tb-ico has-dot" onClick={(e) => { e.stopPropagation(); setNotifOpen((v) => !v); setUserOpen(false); }}>
-                  <NavIcon type="bell" />
-                  <div className={'notif-drop' + (notifOpen ? ' open' : '')}>
-                    <div className="notif-hd">Notifications</div>
-                    {NOTIFICATIONS.map((n, i) => (
-                      <div className="notif-item" key={i}>
-                        <div className="notif-dot" />
-                        <div>
-                          <div className="notif-msg">{n.msg}</div>
-                          <div className="notif-meta">{n.meta}</div>
+              <div className="flex shrink-0 items-center pt-0.5">
+                {isAllConcerns && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Export concerns"
+                          onClick={exportConcerns}
+                          className={cn(
+                            'mr-3 h-8 gap-1.5 rounded-full px-2.5 shadow-none',
+                            'text-muted-foreground',
+                            'hover:bg-muted hover:text-foreground',
+                            'transition-[color,background-color] duration-150',
+                            'cursor-pointer'
+                          )}
+                        />
+                      }
+                    >
+                      <Download className="size-3.5" data-icon="inline-start" />
+                      Export
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Export concerns</TooltipContent>
+                  </Tooltip>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <ThemeToggle />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="relative overflow-visible rounded-full"
+                        >
+                          <Bell className="size-4" />
+                          <span
+                            aria-hidden="true"
+                            className="absolute -top-0.5 -right-0.5 size-2 rounded-full border-2 border-background bg-red-500"
+                          />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end" className="w-80 p-0">
+                      <div className="border-b px-3.5 py-2.5 text-[12.5px] font-semibold">Notifications</div>
+                      {NOTIFICATIONS.map((n, i) => (
+                        <div key={i} className="flex gap-2.5 border-b px-3.5 py-3 last:border-b-0">
+                          <div className="mt-1 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                          <div>
+                            <div className="text-[11.5px] leading-relaxed">{n.msg}</div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">{n.meta}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -115,7 +238,7 @@ export default function AppShell({ session, children }) {
 
       <Toast />
 
-      {['agent', 'branch', 'manager'].includes(session.role) && (
+      {canManageConcerns(session.role) && (
         <CaptureConcernDrawer session={session} open={captureDrawerOpen} onClose={closeCaptureDrawer} />
       )}
     </div>

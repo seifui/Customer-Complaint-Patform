@@ -1,34 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
-import NavIcon from './NavIcon';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 export default function SlidePanel({ open, onClose, title, subtitle, children, footer, width }) {
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e) {
-      if (e.key === 'Escape') onClose();
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
-
   return (
-    <>
-      <div className={'slide-backdrop' + (open ? ' open' : '')} onClick={onClose} />
-      <div className={'slide-panel' + (open ? ' open' : '')} style={width ? { width } : undefined} role="dialog" aria-modal="true" aria-label={title}>
-        <div className="slide-hd">
-          <div className="slide-hd-text">
-            <div className="slide-title">{title}</div>
-            {subtitle && <div className="slide-subtitle">{subtitle}</div>}
-          </div>
-          <button type="button" className="slide-close" onClick={onClose} aria-label="Close">
-            <NavIcon type="x" />
-          </button>
-        </div>
-        <div className="slide-body">{open ? children : null}</div>
-        {footer && <div className="slide-ft">{footer}</div>}
-      </div>
-    </>
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <SheetContent
+        className={cn('gap-0 sm:max-w-md', width && 'sm:max-w-(--slide-w)')}
+        style={width ? { '--slide-w': width } : undefined}
+      >
+        <SheetHeader className="border-b pr-10">
+          <SheetTitle>{title}</SheetTitle>
+          {subtitle && <SheetDescription>{subtitle}</SheetDescription>}
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto px-4">{open ? children : null}</div>
+        {footer && <SheetFooter className="flex-row justify-end border-t">{footer}</SheetFooter>}
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { customerStatusLabel, friendlyStatus } from '@/lib/helpers';
 import { SevBadge } from './Badges';
 import SlidePanel from './SlidePanel';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function FindMyConcerns() {
   const concerns = useStore((s) => s.concerns);
@@ -30,23 +34,25 @@ export default function FindMyConcerns() {
 
   return (
     <div>
-      <form onSubmit={search} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-        <input className="form-inp" placeholder="Enter your NIC or Passport number" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <button className="btn btn-p" type="submit" style={{ flexShrink: 0 }}>Search</button>
+      <form onSubmit={search} className="mb-1 flex gap-2">
+        <Input placeholder="Enter your NIC or Passport number" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Button type="submit" className="shrink-0">Search</Button>
       </form>
-      <div className="muted" style={{ fontSize: 11, marginBottom: 16 }}>
+      <p className="mb-4 text-[11px] text-muted-foreground">
         We&apos;ll show every concern submitted with this NIC or Passport number.
-      </div>
+      </p>
 
       {searched && results.length === 0 && (
-        <div className="callout callout-orange">We couldn&apos;t find any concerns for that NIC or Passport number.</div>
+        <div className="rounded-lg border bg-orange-500/10 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-orange-700 dark:text-orange-400">
+          We couldn&apos;t find any concerns for that NIC or Passport number.
+        </div>
       )}
 
       {results.length > 0 && (
-        <div className="find-list">
+        <div className="flex flex-col gap-2.5">
           {results.map((c) => (
             <div
-              className="find-row"
+              className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3.5 transition-colors hover:bg-muted"
               key={c.id}
               role="button"
               tabIndex={0}
@@ -58,21 +64,21 @@ export default function FindMyConcerns() {
                 }
               }}
             >
-              <div className="find-row-body">
-                <div className="find-row-top">
-                  <div className="find-row-id">{c.id}</div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <div className="font-mono text-[12.5px] font-semibold">{c.id}</div>
+                  <div className="flex gap-1.5">
                     {c.severity && <SevBadge s={c.severity} />}
-                    <span className="badge find-status-badge">{customerStatusLabel(c, c.linked ? problems.find((p) => p.id === c.linked) : null)}</span>
+                    <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">
+                      {customerStatusLabel(c, c.linked ? problems.find((p) => p.id === c.linked) : null)}
+                    </Badge>
                   </div>
                 </div>
-                <div className="find-row-meta">
+                <div className="text-[11px] text-muted-foreground">
                   {c.journey} · Submitted {c.createdAt.slice(0, 10)} · Last updated {c.createdAt.slice(0, 10)}
                 </div>
               </div>
-              <svg className="find-row-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 3.5l5 4.5-5 4.5" />
-              </svg>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </div>
           ))}
         </div>
@@ -81,28 +87,28 @@ export default function FindMyConcerns() {
       <SlidePanel open={!!openConcern} onClose={() => setOpenId(null)} title={openConcern?.id || ''}>
         {openConcern && (
           <div>
-            <div className="pub-recap">
-              <div className="pub-recap-lbl">Your message</div>
-              <div className="pub-recap-txt">&ldquo;{openConcern.raw}&rdquo;</div>
+            <div className="mb-4.5 rounded-lg border bg-muted px-3.5 py-3">
+              <div className="mb-1 text-[10px] font-bold tracking-wide text-muted-foreground uppercase">Your message</div>
+              <div className="text-xs leading-relaxed text-foreground/80 italic">&ldquo;{openConcern.raw}&rdquo;</div>
             </div>
 
-            <div className="section-title" style={{ fontSize: 12, marginTop: 18 }}>Progress</div>
-            <div className="pub-status-row">
-              <div className="pub-status-dot on" />
+            <div className="mb-3 font-heading text-xs font-semibold">Progress</div>
+            <div className="flex items-start gap-3 border-b py-3.5">
+              <div className="mt-1 size-2 shrink-0 rounded-full bg-green-500" />
               <div>
-                <div style={{ fontWeight: 600, fontSize: 12.5 }}>Received</div>
-                <div className="muted" style={{ fontSize: 11 }}>{openConcern.createdAt}</div>
+                <div className="text-[12.5px] font-semibold">Received</div>
+                <div className="text-[11px] text-muted-foreground">{openConcern.createdAt}</div>
               </div>
             </div>
-            <div className="pub-status-row">
-              <div className={'pub-status-dot' + (openConcern.linked ? ' on' : '')} />
-              <div style={{ fontSize: 12.5, lineHeight: 1.6 }}>
+            <div className="flex items-start gap-3 border-b py-3.5">
+              <div className={'mt-1 size-2 shrink-0 rounded-full ' + (openConcern.linked ? 'bg-green-500' : 'bg-muted-foreground/30')} />
+              <div className="text-[12.5px] leading-relaxed">
                 {openConcern.linked ? 'Connected to a known issue our team is tracking.' : 'Reviewed individually by our team.'}
               </div>
             </div>
-            <div className="pub-status-row">
-              <div className={'pub-status-dot' + (openConcern.workflowStatus === 'closed' || openProblem?.status === 'resolved' ? ' on' : '')} />
-              <div style={{ fontSize: 12.5, lineHeight: 1.6 }}>{friendlyStatus(openConcern, openProblem)}</div>
+            <div className="flex items-start gap-3 py-3.5">
+              <div className={'mt-1 size-2 shrink-0 rounded-full ' + (openConcern.workflowStatus === 'closed' || openProblem?.status === 'resolved' ? 'bg-green-500' : 'bg-muted-foreground/30')} />
+              <div className="text-[12.5px] leading-relaxed">{friendlyStatus(openConcern, openProblem)}</div>
             </div>
           </div>
         )}

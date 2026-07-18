@@ -2,11 +2,19 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Camera, FileText, Loader2, Mail, Mic, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { classify, isValidEmail, isValidSLMobile } from '@/lib/helpers';
 import Callout from './Callout';
 import Select from './Select';
 import SlidePanel from './SlidePanel';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 const JOURNEYS = ['Money Transfer', 'Cards', 'KYC / Onboarding', 'Loans', 'Standing Orders', 'ATM', 'Digital Banking App', 'Account Services', 'Other'];
 const LANGS = ['English', 'Sinhala', 'Sinhala (romanized)', 'Tamil', 'Code-mixed'];
@@ -18,8 +26,7 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
   const addConcern = useStore((s) => s.addConcern);
   const showToast = useStore((s) => s.showToast);
 
-  const defaultChannel = session.role === 'branch' ? 'Branch' : 'Call Centre';
-  const [channel, setChannel] = useState(defaultChannel);
+  const [channel, setChannel] = useState('Call Centre');
   const [desc, setDesc] = useState('');
   const [showForwardedEmail, setShowForwardedEmail] = useState(false);
   const [forwardedEmail, setForwardedEmail] = useState('');
@@ -201,32 +208,32 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
     if (phase === 'idle') {
       return (
         <>
-          <button className="btn btn-gh" onClick={handleClose}>Cancel</button>
-          <button className="btn btn-p" onClick={startAIUnderstanding}>Let AI Understand This</button>
+          <Button variant="outline" onClick={handleClose}>Cancel</Button>
+          <Button onClick={startAIUnderstanding}>Let AI Understand This</Button>
         </>
       );
     }
     if (phase === 'processing') {
       return (
         <>
-          <button className="btn btn-gh" disabled>Cancel</button>
-          <button className="btn btn-p btn-loading" disabled>Understanding…</button>
+          <Button variant="outline" disabled>Cancel</Button>
+          <Button disabled><Loader2 className="size-4 animate-spin" /> Understanding…</Button>
         </>
       );
     }
     if (phase === 'review') {
       return (
         <>
-          <button className="btn btn-gh" onClick={resetAll}>Discard</button>
-          <button className="btn btn-p" onClick={confirmConcern}>Confirm &amp; Save Concern</button>
+          <Button variant="outline" onClick={resetAll}>Discard</Button>
+          <Button onClick={confirmConcern}>Confirm &amp; Save Concern</Button>
         </>
       );
     }
     // done
     return (
       <>
-        <button className="btn btn-gh" onClick={handleClose}>Close</button>
-        <button className="btn btn-p" onClick={resetAll}>Log Another Concern</button>
+        <Button variant="outline" onClick={handleClose}>Close</Button>
+        <Button onClick={resetAll}>Log Another Concern</Button>
       </>
     );
   })();
@@ -234,18 +241,17 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
   return (
     <SlidePanel open={open} onClose={handleClose} title="Raise New Concern" subtitle="AI handles the structure — just describe what happened" footer={footer}>
       {phase === 'idle' && (
-        <>
-          <div className="form-section">
-            <div className="form-section-hd">Concern Details</div>
-            <div className="form-row">
-              <label className="form-lbl">Source Channel<span className="req">*</span></label>
+        <div className="space-y-5">
+          <div className="border-b pb-5">
+            <div className="mb-3.5 text-[11px] font-bold tracking-wide text-muted-foreground uppercase">Concern Details</div>
+            <div className="mb-4">
+              <Label className="mb-1.5">Source Channel<span className="text-destructive">*</span></Label>
               <Select value={channel} onChange={setChannel} options={['Call Centre', 'Branch', 'Email', 'Digital App', 'Existing System']} />
             </div>
-            <div className="form-row">
-              <label className="form-lbl">What happened?<span className="req">*</span></label>
-              <textarea
-                className="form-inp"
-                style={{ minHeight: 130 }}
+            <div>
+              <Label className="mb-1.5">What happened?<span className="text-destructive">*</span></Label>
+              <Textarea
+                className="min-h-32.5"
                 placeholder="Type or paste what the customer said, in their own words. Sinhala, Tamil, English, and code-mixed text are all supported."
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
@@ -253,177 +259,178 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
             </div>
           </div>
 
-          <div className="form-section">
-            <div className="form-section-hd">Customer Details</div>
-            <div className="form-row">
-              <label className="form-lbl">Full Name<span className="req">*</span></label>
-              <input
-                className="form-inp"
+          <div className="border-b pb-5">
+            <div className="mb-3.5 text-[11px] font-bold tracking-wide text-muted-foreground uppercase">Customer Details</div>
+            <div className="mb-4">
+              <Label className="mb-1.5">Full Name<span className="text-destructive">*</span></Label>
+              <Input
                 placeholder="e.g. W.A. Perera"
                 value={fullName}
                 onChange={(e) => { setFullName(e.target.value); if (fullNameError) setFullNameError(''); }}
               />
-              {fullNameError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{fullNameError}</div>}
+              {fullNameError && <p className="mt-1.5 text-[11px] text-destructive">{fullNameError}</p>}
             </div>
-            <div className="form-row">
-              <label className="form-lbl">NIC / Passport Number<span className="req">*</span></label>
-              <input
-                className="form-inp"
+            <div className="mb-4">
+              <Label className="mb-1.5">NIC / Passport Number<span className="text-destructive">*</span></Label>
+              <Input
                 placeholder="e.g. 199812345678 or N1234567"
                 value={nic}
                 onChange={(e) => { setNic(e.target.value); if (nicError) setNicError(''); }}
               />
-              {nicError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{nicError}</div>}
+              {nicError && <p className="mt-1.5 text-[11px] text-destructive">{nicError}</p>}
             </div>
-            <div className="grid g2" style={{ gap: 10 }}>
-              <div className="form-row" style={{ marginBottom: 0 }}>
-                <label className="form-lbl">Email Address <span className="section-hint">(optional)</span></label>
-                <input
-                  className="form-inp"
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <Label className="mb-1.5">Email Address <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Input
                   type="email"
                   placeholder="e.g. john.perera@email.com"
                   value={customerEmail}
                   onChange={(e) => { setCustomerEmail(e.target.value); if (emailError) setEmailError(''); if (contactError) setContactError(''); }}
                 />
-                {emailError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{emailError}</div>}
+                {emailError && <p className="mt-1.5 text-[11px] text-destructive">{emailError}</p>}
               </div>
-              <div className="form-row" style={{ marginBottom: 0 }}>
-                <label className="form-lbl">Mobile Number <span className="section-hint">(optional)</span></label>
-                <input
-                  className="form-inp"
+              <div>
+                <Label className="mb-1.5">Mobile Number <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Input
                   placeholder="e.g. 0771234567"
                   inputMode="tel"
                   value={customerMobile}
                   onChange={(e) => { setCustomerMobile(e.target.value); if (mobileError) setMobileError(''); if (contactError) setContactError(''); }}
                 />
-                {mobileError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: 5 }}>{mobileError}</div>}
+                {mobileError && <p className="mt-1.5 text-[11px] text-destructive">{mobileError}</p>}
               </div>
             </div>
-            {contactError && <div style={{ color: 'var(--red)', fontSize: 11.5, lineHeight: 1.5, margin: '8px 0 0' }}>{contactError}</div>}
-            <div className="form-row" style={{ marginTop: 16, marginBottom: 0 }}>
-              <label className="form-lbl">Account / Card Number <span className="section-hint">(optional)</span></label>
-              <input className="form-inp" placeholder="Helps us identify the affected account faster" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} />
+            {contactError && <p className="mt-2 text-[11.5px] leading-relaxed text-destructive">{contactError}</p>}
+            <div className="mt-4">
+              <Label className="mb-1.5">Account / Card Number <span className="font-normal text-muted-foreground">(optional)</span></Label>
+              <Input placeholder="Helps us identify the affected account faster" value={accountRef} onChange={(e) => setAccountRef(e.target.value)} />
             </div>
           </div>
 
-          <div className="form-section" style={{ marginBottom: 0 }}>
-            <div className="form-section-hd">Attachments <span className="section-hint">(optional)</span></div>
-            <div className="attach-row">
-              <button type="button" className="attach-btn" onClick={toggleVoiceNote}>🎙 Record Voice Note</button>
-              <label className="attach-btn">
-                📷 Upload Screenshot
-                <input ref={fileInputScreenshot} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => attachFile('screenshot', e.target.files[0])} />
+          <div>
+            <div className="mb-3.5 text-[11px] font-bold tracking-wide text-muted-foreground uppercase">Attachments <span className="font-normal normal-case text-muted-foreground">(optional)</span></div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={toggleVoiceNote}><Mic className="size-3.5" /> Record Voice Note</Button>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'cursor-pointer')}>
+                <Camera className="size-3.5" /> Upload Screenshot
+                <input ref={fileInputScreenshot} type="file" accept="image/*" className="hidden" onChange={(e) => attachFile('screenshot', e.target.files[0])} />
               </label>
-              <label className="attach-btn">
-                📄 Upload Document
-                <input ref={fileInputDoc} type="file" style={{ display: 'none' }} onChange={(e) => attachFile('document', e.target.files[0])} />
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'cursor-pointer')}>
+                <FileText className="size-3.5" /> Upload Document
+                <input ref={fileInputDoc} type="file" className="hidden" onChange={(e) => attachFile('document', e.target.files[0])} />
               </label>
-              <button type="button" className="attach-btn" onClick={() => setShowForwardedEmail((v) => !v)}>✉ Paste Forwarded Email</button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowForwardedEmail((v) => !v)}><Mail className="size-3.5" /> Paste Forwarded Email</Button>
             </div>
             {attachments.length > 0 && (
-              <div className="pill-list" style={{ marginTop: 10 }}>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {attachments.map((a, i) => (
-                  <span className="pill" key={i}>
-                    {a.type === 'voice' ? '🎙' : a.type === 'screenshot' ? '📷' : '📄'} {a.label}{' '}
-                    <span className="tx-link" style={{ marginLeft: 4 }} onClick={() => removeAttachment(i)}>✕</span>
-                  </span>
+                  <Badge key={i} variant="secondary" className="gap-1">
+                    {a.type === 'voice' ? <Mic className="size-3" /> : a.type === 'screenshot' ? <Camera className="size-3" /> : <FileText className="size-3" />}
+                    {a.label}
+                    <button type="button" className="ml-0.5 cursor-pointer" onClick={() => removeAttachment(i)} aria-label="Remove attachment">
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
                 ))}
               </div>
             )}
             {showForwardedEmail && (
-              <div style={{ marginTop: 10 }}>
-                <textarea className="form-inp" placeholder="Paste the forwarded email content here…" style={{ minHeight: 70 }} value={forwardedEmail} onChange={(e) => setForwardedEmail(e.target.value)} />
+              <div className="mt-2.5">
+                <Textarea className="min-h-17.5" placeholder="Paste the forwarded email content here…" value={forwardedEmail} onChange={(e) => setForwardedEmail(e.target.value)} />
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
 
       {phase === 'processing' && (
-        <div className="pub-processing">
-          <div className="pub-processing-spinner" />
-          <div className="pub-processing-msg">AI Concern Engine processing — understanding, classifying, connecting…</div>
+        <div className="flex flex-col items-center justify-center gap-4.5 px-5 py-16 text-center">
+          <Loader2 className="size-7 animate-spin text-foreground" />
+          <div className="font-heading text-sm font-medium text-foreground/80">AI Concern Engine processing — understanding, classifying, connecting…</div>
         </div>
       )}
 
       {phase === 'review' && review && pending && (
         <>
-          <Callout kind="acc" style={{ marginBottom: 16 }}>
+          <Callout kind="acc">
             <b>{pending.id}</b> has been issued{fullName.trim() ? ' for ' + fullName.trim() : ''}. Review the AI understanding below before confirming.
           </Callout>
 
-          <div className="form-row">
-            <label className="form-lbl">Journey</label>
-            <Select value={review.journey} onChange={(v) => setReview({ ...review, journey: v })} options={JOURNEYS} />
-          </div>
-          <div className="form-row">
-            <label className="form-lbl">Issue Type</label>
-            <input className="form-inp" value={review.issueType} onChange={(e) => setReview({ ...review, issueType: e.target.value })} />
-          </div>
-          <div className="form-row">
-            <label className="form-lbl">Language</label>
-            <Select value={review.lang} onChange={(v) => setReview({ ...review, lang: v })} options={LANGS} />
-          </div>
-          <div className="form-row">
-            <label className="form-lbl">Customer Type</label>
-            <Select value={review.custType} onChange={(v) => setReview({ ...review, custType: v })} options={['Existing customer', 'New customer']} />
-          </div>
-          <div className="form-row">
-            <label className="form-lbl">Severity</label>
-            <Select
-              value={review.severity}
-              onChange={(v) => setReview({ ...review, severity: v })}
-              options={[
-                { value: 'critical', label: 'critical' },
-                { value: 'high', label: 'high' },
-                { value: 'medium', label: 'medium' },
-                { value: 'low', label: 'low' },
-              ]}
-            />
-          </div>
-          <div className="form-row">
-            <label className="form-lbl">Sentiment</label>
-            <Select
-              value={review.sentiment}
-              onChange={(v) => setReview({ ...review, sentiment: v })}
-              options={[
-                { value: 'angry', label: 'angry' },
-                { value: 'frustrated', label: 'frustrated' },
-                { value: 'neutral', label: 'neutral' },
-                { value: 'positive', label: 'positive' },
-              ]}
-            />
-          </div>
-          <div className="form-row" style={{ marginBottom: 16 }}>
-            <label className="form-lbl">Urgency</label>
-            <Select
-              value={review.urgency}
-              onChange={(v) => setReview({ ...review, urgency: v })}
-              options={[
-                { value: 'High', label: 'High' },
-                { value: 'Medium', label: 'Medium' },
-                { value: 'Low', label: 'Low' },
-              ]}
-            />
+          <div className="space-y-4">
+            <div>
+              <Label className="mb-1.5">Journey</Label>
+              <Select value={review.journey} onChange={(v) => setReview({ ...review, journey: v })} options={JOURNEYS} />
+            </div>
+            <div>
+              <Label className="mb-1.5">Issue Type</Label>
+              <Input value={review.issueType} onChange={(e) => setReview({ ...review, issueType: e.target.value })} />
+            </div>
+            <div>
+              <Label className="mb-1.5">Language</Label>
+              <Select value={review.lang} onChange={(v) => setReview({ ...review, lang: v })} options={LANGS} />
+            </div>
+            <div>
+              <Label className="mb-1.5">Customer Type</Label>
+              <Select value={review.custType} onChange={(v) => setReview({ ...review, custType: v })} options={['Existing customer', 'New customer']} />
+            </div>
+            <div>
+              <Label className="mb-1.5">Severity</Label>
+              <Select
+                value={review.severity}
+                onChange={(v) => setReview({ ...review, severity: v })}
+                options={[
+                  { value: 'critical', label: 'critical' },
+                  { value: 'high', label: 'high' },
+                  { value: 'medium', label: 'medium' },
+                  { value: 'low', label: 'low' },
+                ]}
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5">Sentiment</Label>
+              <Select
+                value={review.sentiment}
+                onChange={(v) => setReview({ ...review, sentiment: v })}
+                options={[
+                  { value: 'angry', label: 'angry' },
+                  { value: 'frustrated', label: 'frustrated' },
+                  { value: 'neutral', label: 'neutral' },
+                  { value: 'positive', label: 'positive' },
+                ]}
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5">Urgency</Label>
+              <Select
+                value={review.urgency}
+                onChange={(v) => setReview({ ...review, urgency: v })}
+                options={[
+                  { value: 'High', label: 'High' },
+                  { value: 'Medium', label: 'Medium' },
+                  { value: 'Low', label: 'Low' },
+                ]}
+              />
+            </div>
           </div>
 
           {pending.cls.target ? (
-            <Callout kind="blue">
+            <Callout kind="blue" className="mt-4">
               <b>AI connected the dots ({pending.cls.confidence}% confidence).</b> This matches the pattern of{' '}
               <b>{problems.find((p) => p.id === pending.cls.target)?.concernCount} other concerns</b> linked to{' '}
-              <span className="tx-link" onClick={() => goToProblem(pending.cls.target)}>
+              <span className="cursor-pointer text-primary underline underline-offset-2" onClick={() => goToProblem(pending.cls.target)}>
                 {pending.cls.target} — {problems.find((p) => p.id === pending.cls.target)?.title}
               </span>
               , based on matching terms: <i>{pending.cls.matchTerms}</i>.
-              <div style={{ marginTop: 8 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={review.acceptLink} onChange={(e) => setReview({ ...review, acceptLink: e.target.checked })} />
+              <div className="mt-2">
+                <Label className="cursor-pointer text-[11.5px] font-normal">
+                  <Checkbox checked={review.acceptLink} onCheckedChange={(v) => setReview({ ...review, acceptLink: !!v })} />
                   This connection looks correct
-                </label>
+                </Label>
               </div>
             </Callout>
           ) : (
-            <Callout kind="orange">
+            <Callout kind="orange" className="mt-4">
               <b>No existing pattern matched yet.</b> This concern will be held as a standalone signal and re-checked as more concerns arrive.
             </Callout>
           )}
@@ -438,7 +445,7 @@ export default function CaptureConcernDrawer({ session, open, onClose }) {
           {savedInfo.linkedProblem ? (
             <Callout kind="acc">
               Saved and connected to{' '}
-              <b className="tx-link" onClick={() => goToProblem(savedInfo.linkedProblem.id)}>
+              <b className="cursor-pointer text-primary underline underline-offset-2" onClick={() => goToProblem(savedInfo.linkedProblem.id)}>
                 {savedInfo.linkedProblem.id} — {savedInfo.linkedProblem.title}
               </b>
             </Callout>

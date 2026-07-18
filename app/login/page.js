@@ -1,7 +1,7 @@
 import LoginForm from '@/components/LoginForm';
 
 export const metadata = {
-  title: 'Sign in · ConcernHub',
+  title: 'Sign in · Concerns AI',
 };
 
 export default function LoginPage() {
